@@ -10,9 +10,13 @@
     "test": "jest"
   },
   "dependencies": {
+    "@emotion/react": "^11.11.1",
+    "@emotion/styled": "^11.11.0",
+    "@mui/material": "^5.14.10",
     "next": "latest",
     "react": "latest",
-    "react-dom": "latest"
+    "react-dom": "latest",
+    "react-intl": "^6.4.7"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.1.3",
