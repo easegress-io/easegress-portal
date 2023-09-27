@@ -14,10 +14,13 @@
     "@emotion/styled": "^11.11.0",
     "@mui/icons-material": "^5.14.9",
     "@mui/material": "^5.14.10",
+    "axios": "^1.5.1",
+    "moment": "^2.29.4",
     "next": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "react-intl": "^6.4.7"
+    "react-intl": "^6.4.7",
+    "swr": "^2.2.2"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.1.3",

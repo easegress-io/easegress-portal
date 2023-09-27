@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: none;
+      }
+
+      .cls-2 {
+        fill: #6f7b8b;
+      }
+    </style>
+  </defs>
+  <g id="Role" transform="translate(-676.28 -646.28)">
+    <rect id="矩形_1377" data-name="矩形 1377" class="cls-1" width="24" height="24" transform="translate(676.28 646.28)"/>
+    <path id="账号" class="cls-2" d="M50.082,12.188c-4.058,0-7.088,2.6-7.088,6.368v.406c0,1.971,3.247,1.971,7.359,1.971h4.367c3.948,0,7.359,0,7.359-1.971v-.406c0-3.771-3.03-6.368-7.088-6.368H50.082Zm2.235-.992a5.642,5.642,0,0,0,5.83-5.42,5.844,5.844,0,0,0-11.658,0A5.642,5.642,0,0,0,52.317,11.2Z" transform="translate(635.744 647.662)"/>
+  </g>
+</svg>
