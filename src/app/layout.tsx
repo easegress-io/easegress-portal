@@ -103,7 +103,9 @@ function SideBar() {
   ]
 
   const getCurrentTabValue = () => {
-    return '/' + pathname.split('/')[1]
+    const value = '/' + pathname.split('/')[1]
+    const item = items.find((item) => item.url === value)
+    return item ? item.url : false
   }
 
   return (

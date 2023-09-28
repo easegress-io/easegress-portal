@@ -3,7 +3,6 @@
 import React from "react"
 import { useIntl } from "react-intl"
 
-import styles from './page.module.css';
 import { useClusterMembers } from "./hooks"
 import { useClusters, useCurrentCluster } from "../context"
 import { ClusterType, MemberType } from "@/apis/cluster"
@@ -14,10 +13,14 @@ import roleSVG from '@/asserts/role.svg'
 import startSVG from '@/asserts/start.svg'
 import heartbeatSVG from '@/asserts/heartbeat.svg'
 
+import Editor from '@monaco-editor/react';
+import yaml from 'js-yaml'
 import moment from 'moment'
 import Image from 'next/image'
 import { useRouter } from "next/navigation"
-import { Alert, Avatar, Card, CardContent, CardHeader, Chip, CircularProgress, Grid, Paper } from "@mui/material"
+import { Alert, Avatar, Card, CardContent, CardHeader, Chip, CircularProgress, Grid, Paper, Stack, Button, Dialog, DialogTitle, IconButton, DialogContent } from "@mui/material"
+import CloseIcon from '@mui/icons-material/Close';
+
 
 
 export default function Clusters() {
@@ -107,7 +110,7 @@ function SingleCluster({ cluster }: { cluster: ClusterType }) {
 
         {!isNullOrUndefined(members) &&
           <Grid container>
-            {[...members!, ...members!]!.map((member, index) => {
+            {members!.map((member, index) => {
               return (
                 <SingleClusterMember
                   key={index}
@@ -132,72 +135,114 @@ function SingleClusterMember(props: SingleClusterMemberProps) {
   const { cluster, member } = props
   const intl = useIntl()
   const health = moment().diff(moment(member.lastHeartbeatTime), 'seconds') < 60
+  const yamlDoc = yaml.dump(member)
+  const [details, setDetails] = React.useState(false)
+
+  const items = [
+    { icon: roleSVG, label: intl.formatMessage({ id: 'app.cluster.role' }), value: member.options.ClusterRole },
+    { icon: startSVG, label: intl.formatMessage({ id: 'app.cluster.start' }), value: moment(member.etcd.startTime).fromNow() },
+    { icon: heartbeatSVG, label: intl.formatMessage({ id: 'app.cluster.heartbeat' }), value: moment(member.lastHeartbeatTime).fromNow() },
+  ]
+
   return (
-    <Paper elevation={0} className={styles["cluster-node-content"]}>
-      <div className={styles["host-container"]}>
-        <Image src={nodeSVG} alt="node" />
-
-        <div className={styles["host-content-container"]}>
-          <div className={styles["name-status-container"]}>
-            <div className={styles["name-container"]}>{member.options.Name}</div>
-            <div className={styles["status-container"]}>
-              {health ? (
-                <Chip
-                  size="small"
-                  label="Running"
-                  className={styles["status-content-normal"]}
-                />
-              ) : (
-                <Chip
-                  size="small"
-                  label="Unhealthy"
-                  className={styles["status-content-danger"]}
-                />
-              )}
+    <Paper style={{ width: '100%', margin: "16px 0 0 0", border: "1px solid #dee1e7" }} >
+      <Stack direction={"row"}
+        justifyContent="flex-start"
+        alignItems="center"
+        spacing={2}
+        marginTop={2}
+        marginBottom={2}
+      >
+        <div style={{ flexGrow: 1 }}>
+          <Stack direction={"row"} spacing={2} marginLeft={2}>
+            <Image src={nodeSVG} alt="node" />
+            <div >
+              <Stack direction={"column"}>
+                <div>
+                  <Stack direction={"row"} spacing={2}>
+                    <div style={{ color: "#002b69", fontSize: "16px", fontWeight: 500 }} >{member.options.Name}</div>
+                    <div>
+                      {health ? (
+                        <Chip size="small" label="Running" style={{ color: "#3a9305", backgroundColor: "#e0f7d2" }} />
+                      ) : (
+                        <Chip size="small" label="Unhealthy" style={{ color: "#ac2e00", backgroundColor: "#ffe5db" }} />
+                      )}
+                    </div>
+                  </Stack>
+                </div>
+                <div style={{ color: "#6f7b8b", fontSize: "14px", fontWeight: 500 }}>{member.options.APIAddr}</div>
+              </Stack>
             </div>
-          </div>
-          <div className={styles["address-container"]}>{member.options.APIAddr}</div>
-        </div>
-      </div>
-
-      <div className={styles["items-container"]}>
-        <div className={styles["item-container"]}>
-          <Image src={roleSVG} alt="role" />
-
-          <div className={styles["item-content-container"]}>
-            <div className={styles["title-container"]}>
-              {intl.formatMessage({ id: 'app.traffic.cluster.label.role' })}
-            </div>
-            <div className={styles["value-container"]}>{member.options.ClusterRole}</div>
-          </div>
+          </Stack>
         </div>
 
-        <div className={styles["item-container"]}>
-          <Image src={startSVG} alt="start" />
-
-          <div className={styles["item-content-container"]}>
-            <div className={styles["title-container"]}>
-              {intl.formatMessage({ id: 'app.traffic.cluster.label.start' })}
-            </div>
-            <div className={styles["value-container"]}>
-              {moment(member.etcd.startTime).fromNow()}
-            </div>
-          </div>
+        <div>
+          <Stack direction={"row"}
+            justifyContent="space-around"
+            alignItems="center"
+            spacing={10}
+            marginRight={3}
+          >
+            {items.map((item, index) => {
+              return (
+                <div key={index}>
+                  <Stack direction={"row"} spacing={2} justifyContent="flex-start" alignItems="center">
+                    <div>
+                      <Image src={item.icon} alt={item.label}
+                        style={{
+                          width: "24px",
+                          height: "24px",
+                        }} />
+                    </div>
+                    <div>
+                      <Stack direction={"column"}>
+                        <div style={{
+                          color: "#6f7b8b",
+                          fontWeight: 500,
+                        }}>
+                          {item.label}
+                        </div>
+                        <div style={{
+                          color: "#002b69",
+                          fontWeight: 500,
+                        }}>
+                          {item.value}
+                        </div>
+                      </Stack>
+                    </div>
+                  </Stack>
+                </div>
+              )
+            })}
+            <Button variant="outlined" style={{ textTransform: "none" }} onClick={() => { setDetails(true) }}>Details</Button>
+          </Stack>
         </div>
+      </Stack >
+      <Dialog open={details} onClose={() => { setDetails(false) }} fullWidth maxWidth="lg">
+        <DialogTitle sx={{ m: 0, p: 2 }}>
+          {cluster.name} - {member.options.Name}
+        </DialogTitle>
+        <IconButton
+          aria-label="close"
+          onClick={() => { setDetails(false) }}
+          sx={{
+            position: 'absolute',
+            right: 8,
+            top: 8,
+            color: (theme) => theme.palette.grey[500],
+          }}
+        >
+          <CloseIcon />
+        </IconButton>
 
-        <div className={styles["item-container"]}>
-          <Image src={heartbeatSVG} alt="heartbeat" />
-
-          <div className={styles["item-content-container"]}>
-            <div className={styles["title-container"]}>
-              {intl.formatMessage({
-                id: 'app.traffic.cluster.label.heartbeat',
-              })}
-            </div>
-            <div className={styles["value-container"]}>{moment(member.lastHeartbeatTime).fromNow()}</div>
-          </div>
-        </div>
-      </div>
-    </Paper>
+        <DialogContent>
+          <Editor language="yaml" value={yamlDoc} height={'80vh'}
+            options={{
+              readOnly: true,
+              scrollBeyondLastLine: false,
+            }} />
+        </DialogContent>
+      </Dialog>
+    </Paper >
   )
 }
