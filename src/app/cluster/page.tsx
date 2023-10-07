@@ -3,7 +3,6 @@
 import React from "react"
 import { useIntl } from "react-intl"
 
-import { useClusterMembers } from "./hooks"
 import { useClusters, useCurrentCluster } from "../context"
 import { ClusterType, MemberType } from "@/apis/cluster"
 import { isNullOrUndefined } from "@/common/utils"
@@ -18,10 +17,10 @@ import yaml from 'js-yaml'
 import moment from 'moment'
 import Image from 'next/image'
 import { useRouter } from "next/navigation"
-import { Alert, Avatar, Card, CardContent, CardHeader, Chip, CircularProgress, Grid, Paper, Stack, Button, Dialog, DialogTitle, IconButton, DialogContent } from "@mui/material"
+import { Avatar, Card, CardContent, CardHeader, Chip, CircularProgress, Grid, Paper, Stack, Button, Dialog, DialogTitle, IconButton, DialogContent } from "@mui/material"
 import CloseIcon from '@mui/icons-material/Close';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import { useClusterMembers } from "@/apis/hooks"
+import ErrorAlert from "@/components/ErrorAlert"
 
 export default function Clusters() {
   const { clusters } = useClusters()
@@ -42,8 +41,8 @@ function SingleCluster({ cluster }: { cluster: ClusterType }) {
   const intl = useIntl()
   const router = useRouter()
   const { setCurrentClusterID } = useCurrentCluster()
-  const { members, error, isLoading } = useClusterMembers(cluster)
-  const [showErr, setShowErr] = React.useState(false)
+  const { members, error, isLoading } = useClusterMembers(cluster, { refreshInterval: 10000 })
+  const [errExpand, setErrExpand] = React.useState(false)
 
   return (
     <Card elevation={1}>
@@ -98,20 +97,7 @@ function SingleCluster({ cluster }: { cluster: ClusterType }) {
         {isLoading && <CircularProgress />}
 
         {!isNullOrUndefined(error) && (
-          <Alert
-            severity="error"
-            style={{
-              margin: '21px 0 0 0',
-              display: 'flex',
-            }}
-            action={showErr ?
-              <IconButton onClick={() => { setShowErr(false) }}><ExpandLessIcon /></IconButton> :
-              <IconButton onClick={() => { setShowErr(true) }}><ExpandMoreIcon /></IconButton>
-            }
-          >
-            {error.message ? JSON.stringify(error.message) : "Error"}
-            {showErr && <pre style={{ whiteSpace: 'pre-wrap' }}>{JSON.stringify(error, null, 2)}</pre>}
-          </Alert>
+          <ErrorAlert error={error} expand={errExpand} onClose={() => { setErrExpand(!errExpand) }} />
         )}
 
         {!isNullOrUndefined(members) &&

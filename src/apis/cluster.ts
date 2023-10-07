@@ -1,4 +1,5 @@
 import api from "./api"
+import { AxiosRequestConfig } from "axios"
 import { urls } from "./urls"
 import { AxiosResponse } from "axios"
 
@@ -21,12 +22,20 @@ export type MemberType = {
   lastHeartbeatTime: string
 }
 
-function getURL(cluster: ClusterType, path: string): string {
-  // TODO: later may check protocol, etc.
-  return cluster.apiAddresses[0] + path
+type ClientInfo = {
+  url: string
+  config: AxiosRequestConfig
+}
+
+export function getClientInfo(cluster: ClusterType, path: string): ClientInfo {
+  // TODO: later may check protocol, and add auth, mtls to config
+  return {
+    url: cluster.apiAddresses[0] + path,
+    config: {}
+  }
 }
 
 export async function getClusterMembers(cluster: ClusterType) {
-  const url = getURL(cluster, urls.Members)
-  return await api.get<any, AxiosResponse<MemberType[]>>(url).then(res => res.data)
+  const info = getClientInfo(cluster, urls.Members)
+  return await api.get<any, AxiosResponse<MemberType[]>>(info.url, info.config).then(res => res.data)
 }
