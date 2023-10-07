@@ -1,4 +1,3 @@
-import { getuid } from "process"
 import api from "./api"
 import { urls } from "./urls"
 import { AxiosResponse } from "axios"

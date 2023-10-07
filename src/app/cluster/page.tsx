@@ -20,8 +20,8 @@ import Image from 'next/image'
 import { useRouter } from "next/navigation"
 import { Alert, Avatar, Card, CardContent, CardHeader, Chip, CircularProgress, Grid, Paper, Stack, Button, Dialog, DialogTitle, IconButton, DialogContent } from "@mui/material"
 import CloseIcon from '@mui/icons-material/Close';
-
-
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 
 export default function Clusters() {
   const { clusters } = useClusters()
@@ -43,6 +43,7 @@ function SingleCluster({ cluster }: { cluster: ClusterType }) {
   const router = useRouter()
   const { setCurrentClusterID } = useCurrentCluster()
   const { members, error, isLoading } = useClusterMembers(cluster)
+  const [showErr, setShowErr] = React.useState(false)
 
   return (
     <Card elevation={1}>
@@ -102,9 +103,14 @@ function SingleCluster({ cluster }: { cluster: ClusterType }) {
             style={{
               margin: '21px 0 0 0',
               display: 'flex',
-              alignItems: 'center',
-            }}>
-            {error}
+            }}
+            action={showErr ?
+              <IconButton onClick={() => { setShowErr(false) }}><ExpandLessIcon /></IconButton> :
+              <IconButton onClick={() => { setShowErr(true) }}><ExpandMoreIcon /></IconButton>
+            }
+          >
+            {error.message ? JSON.stringify(error.message) : "Error"}
+            {showErr && <pre style={{ whiteSpace: 'pre-wrap' }}>{JSON.stringify(error, null, 2)}</pre>}
           </Alert>
         )}
 

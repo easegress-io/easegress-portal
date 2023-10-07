@@ -1,4 +1,6 @@
 export const enUS = {
+  'app.redirect': 'Redirecting...',
+
   'app.cluster': 'Cluster',
   'app.cluster.apiAddress': 'API Address',
   'app.cluster.role': "Role",
