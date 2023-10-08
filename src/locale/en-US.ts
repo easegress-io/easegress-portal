@@ -14,6 +14,11 @@ export const enUS = {
   'app.traffic': 'Traffic',
   'app.traffic.createServer': 'Create Server',
 
-  'app.searchbar.name': 'Name',
-  'app.searchbar.cluster': 'Cluster',
+  'app.general.name': 'Name',
+  'app.general.invalidYaml': 'Invalid yaml, error: {error}',
+  'app.general.invalidKind': 'Invalid kind, only support: {kinds}',
+
+  'app.general.create': 'Create',
+  'app.general.createSuccess': 'Create {kind} {name} success',
+  'app.general.createFailed': 'Create {kind} {name} failed, error: {error}',
 }

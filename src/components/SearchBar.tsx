@@ -51,7 +51,7 @@ export default function SearchBar({ search, onSearchChange, buttons }: SearchBar
                     {...params}
                     label={
                       intl.formatMessage({
-                        id: 'app.searchbar.cluster',
+                        id: 'app.cluster',
                       })
                     }
                     size="small"
@@ -84,7 +84,7 @@ export default function SearchBar({ search, onSearchChange, buttons }: SearchBar
                   onSearchChange(event.target.value)
                 }}
                 label={intl.formatMessage({
-                  id: 'app.searchbar.name',
+                  id: 'app.general.name',
                 })}
                 InputProps={{
                   startAdornment: (

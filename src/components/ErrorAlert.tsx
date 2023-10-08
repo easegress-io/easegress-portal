@@ -1,5 +1,6 @@
 "use client"
 
+import { catchHTTPErrorMessage, truncateString } from "@/common/utils"
 import ExpandLess from "@mui/icons-material/ExpandLess"
 import ExpandMore from "@mui/icons-material/ExpandMore"
 import { Alert, IconButton } from "@mui/material"
@@ -21,7 +22,7 @@ export default function ErrorAlert({ error, expand, onClose }: {
         <IconButton onClick={onClose}><ExpandMore /></IconButton>
       }
     >
-      {error.message ? JSON.stringify(error.message) : "Error"}
+      {truncateString(catchHTTPErrorMessage(error), 100)}
       {expand && <pre style={{ whiteSpace: 'pre-wrap' }}>{JSON.stringify(error, null, 2)}</pre>}
     </Alert>
   )

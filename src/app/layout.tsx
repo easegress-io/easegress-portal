@@ -6,6 +6,7 @@ import { translations } from '@/locale'
 import { ClusterContext, defaultCluster } from './context'
 import { IntlProvider, useIntl } from 'react-intl';
 import { useRouter, usePathname } from 'next/navigation'
+import { SnackbarProvider } from 'notistack'
 
 import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
@@ -70,7 +71,9 @@ export default function RootLayout({ children, }: { children: React.ReactNode })
             <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
               <Toolbar />
               <ClusterContext.Provider value={clusterContext}>
-                {children}
+                <SnackbarProvider maxSnack={3} autoHideDuration={5000}>
+                  {children}
+                </SnackbarProvider>
               </ClusterContext.Provider>
             </Box>
           </Box>

@@ -20,6 +20,7 @@
     "js-yaml": "^4.1.0",
     "moment": "^2.29.4",
     "next": "latest",
+    "notistack": "^3.0.1",
     "react": "latest",
     "react-dom": "latest",
     "react-intl": "^6.4.7",

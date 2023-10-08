@@ -12,15 +12,14 @@ import roleSVG from '@/asserts/role.svg'
 import startSVG from '@/asserts/start.svg'
 import heartbeatSVG from '@/asserts/heartbeat.svg'
 
-import Editor from '@monaco-editor/react';
 import yaml from 'js-yaml'
 import moment from 'moment'
 import Image from 'next/image'
 import { useRouter } from "next/navigation"
-import { Avatar, Card, CardContent, CardHeader, Chip, CircularProgress, Grid, Paper, Stack, Button, Dialog, DialogTitle, IconButton, DialogContent } from "@mui/material"
-import CloseIcon from '@mui/icons-material/Close';
+import { Avatar, Card, CardContent, CardHeader, Chip, CircularProgress, Grid, Paper, Stack, Button, } from "@mui/material"
 import { useClusterMembers } from "@/apis/hooks"
 import ErrorAlert from "@/components/ErrorAlert"
+import YamlEditor from "@/components/YamlEditor"
 
 export default function Clusters() {
   const { clusters } = useClusters()
@@ -210,31 +209,15 @@ function SingleClusterMember(props: SingleClusterMemberProps) {
           </Stack>
         </div>
       </Stack >
-      <Dialog open={details} onClose={() => { setDetails(false) }} fullWidth maxWidth="lg">
-        <DialogTitle sx={{ m: 0, p: 2 }}>
-          {cluster.name} - {member.options.Name}
-        </DialogTitle>
-        <IconButton
-          aria-label="close"
-          onClick={() => { setDetails(false) }}
-          sx={{
-            position: 'absolute',
-            right: 8,
-            top: 8,
-            color: (theme) => theme.palette.grey[500],
-          }}
-        >
-          <CloseIcon />
-        </IconButton>
-
-        <DialogContent>
-          <Editor language="yaml" value={yamlDoc} height={'80vh'}
-            options={{
-              readOnly: true,
-              scrollBeyondLastLine: false,
-            }} />
-        </DialogContent>
-      </Dialog>
+      <YamlEditor
+        open={details}
+        onClose={() => { setDetails(false) }}
+        title={`${cluster.name} - ${member.options.Name}`}
+        yaml={yamlDoc}
+        onYamlChange={() => { }}
+        editorOptions={{
+          readOnly: true,
+        }} />
     </Paper >
   )
 }
