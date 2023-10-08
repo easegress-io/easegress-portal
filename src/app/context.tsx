@@ -17,15 +17,7 @@ type ClusterContextType = {
 export const ClusterContext = React.createContext<ClusterContextType | null>(null)
 
 export const useClusters = () => {
-    const { clusters, setClusters } = React.useContext(ClusterContext)!
-    return { clusters, setClusters }
-}
-
-export const useCurrentCluster = () => {
-    const { currentClusterID, clusters, setCurrentClusterID } = React.useContext(ClusterContext)!
+    const { clusters, setClusters, currentClusterID, setCurrentClusterID } = React.useContext(ClusterContext)!
     const currentCluster = clusters.find((cluster) => cluster.id === currentClusterID) || defaultCluster
-    return {
-        currentCluster,
-        setCurrentClusterID,
-    }
+    return { clusters, setClusters, currentCluster, setCurrentClusterID }
 }

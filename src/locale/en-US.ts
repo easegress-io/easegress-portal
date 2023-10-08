@@ -12,4 +12,8 @@ export const enUS = {
   'app.pipeline': 'Pipeline',
 
   'app.traffic': 'Traffic',
+  'app.traffic.createServer': 'Create Server',
+
+  'app.searchbar.name': 'Name',
+  'app.searchbar.cluster': 'Cluster',
 }
