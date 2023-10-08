@@ -23,30 +23,15 @@ export default function Traffic() {
   const [objectYaml, setObjectYaml] = React.useState('')
 
   const buttons = [
-    <Button
-      variant="outlined"
-      color="primary"
-      startIcon={<AddIcon />}
-      style={{
-        height: '40px',
-        lineHeight: '40px',
-        textTransform: 'none',
-        borderColor: '#DEDEDE',
-        background: '#fff',
-      }}
-      onClick={() => {
-      }}
-    >
-      {intl.formatMessage({
-        id: 'app.traffic.createServer',
-      })}
-    </Button>
+    {
+      icon: <AddIcon />,
+      label: intl.formatMessage({ id: 'app.traffic.createServer' }),
+      onClick: () => { }
+    },
   ]
 
   return (
     <div>
-      {currentCluster.name}
-      {search}
       <SearchBar search={search} onSearchChange={(value: string) => { setSearch(value) }} buttons={buttons} />
     </div>
   )

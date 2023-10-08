@@ -1,15 +1,19 @@
 import { useClusters } from "@/app/context";
-import { Autocomplete, Card, CardContent, Grid, IconButton, InputAdornment, TextField, Typography } from "@mui/material";
+import { Autocomplete, Button, Card, CardContent, Grid, IconButton, InputAdornment, TextField, Typography } from "@mui/material";
 import { useIntl } from "react-intl";
 import SearchIcon from '@mui/icons-material/Search';
 import ClearIcon from '@mui/icons-material/Clear';
 import Spacer from "@/components/Spacer"
-import { Box } from "@mui/system";
+import React, { Fragment } from "react";
 
 export type SearchBarProps = {
   search: string
   onSearchChange: (search: string) => void
-  buttons?: React.ReactNode[]
+  buttons?: {
+    icon: React.ReactNode | undefined
+    label: string
+    onClick: () => void
+  }[]
 }
 
 export default function SearchBar({ search, onSearchChange, buttons }: SearchBarProps) {
@@ -109,10 +113,24 @@ export default function SearchBar({ search, onSearchChange, buttons }: SearchBar
               <Typography flexGrow={1} />
 
               {buttons && buttons.map((button, index) => {
-                return <Box key={index}>
+                return <Fragment key={index}>
                   <Spacer size={16} />
-                  {button}
-                </Box>
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    startIcon={button.icon}
+                    style={{
+                      height: '40px',
+                      lineHeight: '40px',
+                      textTransform: 'none',
+                      borderColor: '#DEDEDE',
+                      background: '#fff',
+                    }}
+                    onClick={button.onClick}
+                  >
+                    {button.label}
+                  </Button>
+                </Fragment>
               })}
             </Grid>
           </Grid>
