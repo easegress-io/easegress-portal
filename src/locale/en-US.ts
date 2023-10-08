@@ -17,6 +17,7 @@ export const enUS = {
   'app.general.name': 'Name',
   'app.general.invalidYaml': 'Invalid yaml, error: {error}',
   'app.general.invalidKind': 'Invalid kind, only support: {kinds}',
+  'app.general.noResult': 'Oops! The result does not exist',
 
   'app.general.create': 'Create',
   'app.general.createSuccess': 'Create {kind} {name} success',

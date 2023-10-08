@@ -19,7 +19,7 @@ import { useRouter } from "next/navigation"
 import { Avatar, Card, CardContent, CardHeader, Chip, CircularProgress, Grid, Paper, Stack, Button, } from "@mui/material"
 import { useClusterMembers } from "@/apis/hooks"
 import ErrorAlert from "@/components/ErrorAlert"
-import YamlEditor from "@/components/YamlEditor"
+import YamlEditorDialog from "@/components/YamlEditorDialog"
 
 export default function Clusters() {
   const { clusters } = useClusters()
@@ -209,7 +209,7 @@ function SingleClusterMember(props: SingleClusterMemberProps) {
           </Stack>
         </div>
       </Stack >
-      <YamlEditor
+      <YamlEditorDialog
         open={details}
         onClose={() => { setDetails(false) }}
         title={`${cluster.name} - ${member.options.Name}`}

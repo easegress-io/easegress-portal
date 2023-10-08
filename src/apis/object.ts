@@ -88,7 +88,7 @@ export namespace httpserver {
 // define a type that split obejcts into different kinds
 export type Objects = {
     pipelines: pipeline.Pipeline[]
-    httpservers: httpserver.HTTPServer[]
+    httpServers: httpserver.HTTPServer[]
     others: Object[]
 }
 
@@ -97,7 +97,7 @@ export async function getObjects(cluster: ClusterType) {
     return await api.get<any, AxiosResponse<Object[]>>(info.url, info.config).then(res => res.data).then(data => {
         const result: Objects = {
             pipelines: [],
-            httpservers: [],
+            httpServers: [],
             others: []
         }
 
@@ -105,7 +105,7 @@ export async function getObjects(cluster: ClusterType) {
             if (obj.kind === "Pipeline") {
                 result.pipelines.push(obj as pipeline.Pipeline)
             } else if (obj.kind === "HTTPServer") {
-                result.httpservers.push(obj as httpserver.HTTPServer)
+                result.httpServers.push(obj as httpserver.HTTPServer)
             } else {
                 result.others.push(obj)
             }

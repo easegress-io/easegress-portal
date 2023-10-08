@@ -4,7 +4,7 @@ export function isNullOrUndefined(obj: any): boolean {
   return obj === null || obj === undefined;
 }
 
-export function catchHTTPErrorMessage(err: any): string {
+export function catchErrorMessage(err: any): string {
   if (err.response) {
     return JSON.stringify(err.response.data)
   }

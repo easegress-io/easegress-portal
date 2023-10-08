@@ -2,38 +2,26 @@
 
 import { useObjects } from "@/apis/hooks"
 import { useClusters } from "../context"
-import { Editor } from "@monaco-editor/react"
 import React from "react"
-import { Object, createObject } from "@/apis/object"
-import { Autocomplete, Button, Card, CardContent, Dialog, DialogContent, DialogTitle, Grid, IconButton, InputAdornment, List, TextField } from "@mui/material"
-import importSVG from '@/asserts/import.svg'
-import Image from "next/image"
+import { Object, Objects, createObject } from "@/apis/object"
+import { Alert, Box, CircularProgress, List } from "@mui/material"
 import { useIntl } from "react-intl"
-import SearchIcon from '@mui/icons-material/Search';
-import ClearIcon from '@mui/icons-material/Clear';
 import AddIcon from '@mui/icons-material/Add';
-import Spacer from "@/components/Spacer"
 import SearchBar from "@/components/SearchBar"
-import CloseIcon from '@mui/icons-material/Close';
-import YamlEditor from "@/components/YamlEditor"
+import YamlEditorDialog from "@/components/YamlEditorDialog"
 import { useSnackbar } from "notistack"
-import yaml from 'js-yaml'
-import { catchHTTPErrorMessage, isNullOrUndefined, loadYaml } from "@/common/utils"
+import { catchErrorMessage, loadYaml } from "@/common/utils"
+import BlankPage from "@/components/BlankPage"
+import { ClusterType } from "@/apis/cluster"
+import ErrorAlert from "@/components/ErrorAlert"
 
 export default function Traffic() {
   const intl = useIntl()
-  const { enqueueSnackbar } = useSnackbar()
   const { currentCluster } = useClusters()
   const [search, setSearch] = React.useState("")
-
-  const [createServerYaml, setCreateServerYaml] = React.useState('')
   const [createServerOpen, setCreateServerOpen] = React.useState(false)
 
   const { objects, error, isLoading, mutate } = useObjects(currentCluster)
-  const httpservers = objects?.httpservers.filter((value) => {
-    return value.name.includes(search)
-  }) || []
-  const pipelines = objects?.pipelines || []
 
   const searchBarButtons = [
     {
@@ -43,19 +31,69 @@ export default function Traffic() {
     },
   ]
 
-  const onCreateServerClose = () => {
-    setCreateServerOpen(false)
+  return (
+    <div>
+      <SearchBar search={search} onSearchChange={(value: string) => { setSearch(value) }} buttons={searchBarButtons} />
+      <CreateServerDialog open={createServerOpen} onClose={() => { setCreateServerOpen(false) }} cluster={currentCluster} mutate={mutate} />
+      <TrafficContent cluster={currentCluster} objects={objects} error={error} isLoading={isLoading} mutate={mutate} search={search} />
+    </div>
+  )
+}
+
+type TrafficContentProps = {
+  cluster: ClusterType
+  objects: Objects | undefined
+  search: string
+  error: any
+  isLoading: boolean
+  mutate: () => void
+}
+
+function TrafficContent(props: TrafficContentProps) {
+  const intl = useIntl()
+  const { cluster, objects, error, isLoading, mutate, search } = props
+  const httpServers = objects?.httpServers.filter(server => { return server.name.includes(search) }) || []
+  const pipelines = objects?.pipelines || []
+
+  if (isLoading) {
+    return (
+      <Box padding={'16px'}>
+        <CircularProgress />
+      </Box>
+    )
   }
 
-  const onCreateServerYamlChange = (value: string | undefined, ev: any) => {
-    setCreateServerYaml(value || '')
+  if (error) {
+    return <ErrorAlert error={error} expand={true} onClose={() => { }} />
   }
 
-  const createServerActions = [
+  if (httpServers.length === 0) {
+    return <BlankPage description={intl.formatMessage({ id: "app.general.noResult" })} />
+  }
+  return <>todo</>
+}
+
+type CreateServerDialogProps = {
+  open: boolean
+  onClose: () => void
+  cluster: ClusterType
+  mutate: () => void
+}
+
+function CreateServerDialog({ open, onClose, cluster, mutate }: CreateServerDialogProps) {
+  const intl = useIntl()
+  const [yamlDoc, setYamlDoc] = React.useState('')
+  const { enqueueSnackbar } = useSnackbar()
+
+  const onYamlChange = (value: string | undefined, ev: any) => {
+    setYamlDoc(value || '')
+  }
+
+  const actions = [
     {
       label: intl.formatMessage({ id: 'app.general.create' }),
       onClick: () => {
-        const { result, err } = loadYaml(createServerYaml)
+        const { result, err } = loadYaml(yamlDoc)
         if (err !== "") {
           enqueueSnackbar(intl.formatMessage({ id: 'app.general.invalidYaml' }, { error: err }), { variant: 'error' })
           return
@@ -66,40 +104,25 @@ export default function Traffic() {
           return
         }
 
-        createObject(currentCluster, createServerYaml).then(() => {
+        createObject(cluster, yamlDoc).then(() => {
           mutate()
-          onCreateServerClose()
+          onClose()
           enqueueSnackbar(intl.formatMessage({ id: 'app.general.createSuccess' }, { kind: 'HTTPServer', name: object.name }), { variant: 'success' })
         }).catch((err) => {
-          enqueueSnackbar(intl.formatMessage({ id: 'app.general.createFailed' }, { kind: 'HTTPServer', name: object.name, error: catchHTTPErrorMessage(err) }), { variant: 'error' })
+          enqueueSnackbar(intl.formatMessage({ id: 'app.general.createFailed' }, { kind: 'HTTPServer', name: object.name, error: catchErrorMessage(err) }), { variant: 'error' })
         })
       }
     },
   ]
 
   return (
-    <div>
-      <SearchBar search={search} onSearchChange={(value: string) => { setSearch(value) }} buttons={searchBarButtons} />
-      <List>
-        {httpservers.map((srv, index) => {
-          return (
-            <div key={index}>{srv.kind} {srv.name}</div>
-          )
-        })}
-        {pipelines.map((pl, index) => {
-          return (
-            <div key={index}>{pl.kind} {pl.name}</div>
-          )
-        })}
-      </List>
-      <YamlEditor
-        open={createServerOpen}
-        onClose={onCreateServerClose}
-        title={intl.formatMessage({ id: 'app.traffic.createServer' })}
-        yaml={createServerYaml}
-        onYamlChange={onCreateServerYamlChange}
-        actions={createServerActions}
-      />
-    </div>
+    <YamlEditorDialog
+      open={open}
+      onClose={onClose}
+      title={intl.formatMessage({ id: 'app.traffic.createServer' })}
+      yaml={yamlDoc}
+      onYamlChange={onYamlChange}
+      actions={actions}
+    />
   )
 }
