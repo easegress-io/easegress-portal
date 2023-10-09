@@ -72,7 +72,9 @@ export default function RootLayout({ children, }: { children: React.ReactNode })
               <Toolbar />
               <ClusterContext.Provider value={clusterContext}>
                 <SnackbarProvider maxSnack={3} autoHideDuration={5000}>
-                  {children}
+                  <Box marginTop={1} marginLeft={2} marginRight={2}>
+                    {children}
+                  </Box>
                 </SnackbarProvider>
               </ClusterContext.Provider>
             </Box>
