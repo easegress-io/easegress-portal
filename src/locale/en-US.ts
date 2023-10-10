@@ -22,7 +22,10 @@ export const enUS = {
   'app.traffic.pipeline': 'Pipeline',
   'app.traffic.host.sameAsAbove': "same as above",
 
+  'app.controller.createController': 'Create Controller',
+
   'app.general.name': 'Name',
+  'app.general.kind': 'Kind',
   'app.general.invalidYaml': 'Invalid yaml, error: {error}',
   'app.general.invalidKind': 'Invalid kind, only support: {kinds}',
   'app.general.noResult': 'No result found.',
