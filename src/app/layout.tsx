@@ -27,9 +27,10 @@ export default function RootLayout({ children, }: { children: React.ReactNode })
   // TODO: load clusters from file or local storage.
   const fakeCluster: ClusterType = {
     id: 1,
-    name: "127.0.0.1",
-    apiAddresses: ["http://localhost:2381"],
+    name: "port 12381",
+    apiAddresses: ["http://localhost:12381"],
   }
+
   const [clusters, setClusters] = React.useState<ClusterType[]>([defaultCluster, fakeCluster])
   const [currentClusterID, setCurrentClusterID] = React.useState<number>(defaultCluster.id)
   const clusterContext = {

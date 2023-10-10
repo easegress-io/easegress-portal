@@ -22,6 +22,7 @@ export default function YamlEditorDialog(props: YamlEditorProps) {
 	const { open, onClose, title, yaml, onYamlChange, editorOptions, actions } = props
 	const options = {
 		scrollBeyondLastLine: false,
+		fontSize: 14,
 		...editorOptions
 	}
 

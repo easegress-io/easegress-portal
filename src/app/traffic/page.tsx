@@ -3,8 +3,8 @@
 import { useObjects } from "@/apis/hooks"
 import { useClusters } from "../context"
 import React from "react"
-import { Object, Objects, createObject, httpserver, pipeline } from "@/apis/object"
-import { Alert, Box, Button, ButtonBase, Chip, CircularProgress, Collapse, IconButton, List, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material"
+import { Object, Objects, createObject, deleteObject, getObjectStatus, httpserver, pipeline, updateObject } from "@/apis/object"
+import { Box, Chip, CircularProgress, Collapse, IconButton, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, Typography } from "@mui/material"
 import { useIntl } from "react-intl"
 import AddIcon from '@mui/icons-material/Add';
 import SearchBar from "@/components/SearchBar"
@@ -20,8 +20,8 @@ import Image from "next/image"
 import easegressSVG from '@/asserts/easegress.svg'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
-import { Tab } from "@mui/base"
 import yaml from "js-yaml"
+import SimpleDialog from "@/components/SimpleDialog"
 
 export default function Traffic() {
   const intl = useIntl()
@@ -46,15 +46,6 @@ export default function Traffic() {
       <TrafficContent cluster={currentCluster} objects={objects} error={error} isLoading={isLoading} mutate={mutate} search={search} />
     </div>
   )
-}
-
-type TrafficContentProps = {
-  cluster: ClusterType
-  objects: Objects | undefined
-  search: string
-  error: any
-  isLoading: boolean
-  mutate: () => void
 }
 
 type TableData = {
@@ -87,18 +78,75 @@ function getTableData(httpServer: httpserver.HTTPServer): TableData {
   }
 }
 
+type TrafficContentProps = {
+  cluster: ClusterType
+  objects: Objects | undefined
+  search: string
+  error: any
+  isLoading: boolean
+  mutate: () => void
+}
+
 function TrafficContent(props: TrafficContentProps) {
   const intl = useIntl()
+  const { enqueueSnackbar } = useSnackbar()
   const { cluster, objects, error, isLoading, mutate, search } = props
-  const httpServers = objects?.httpServers.filter(server => { return server.name.includes(search) }) || []
+  const httpServers = objects?.httpServers?.filter(server => { return server.name.includes(search) }) || []
   const pipelines = objects?.pipelines || []
-  const [expandValues, setExpandValues] = React.useState<{ [key: string]: boolean }>({})
 
+  const [pipelineMap, setPipelineMap] = React.useState({} as { [key: string]: pipeline.Pipeline })
+  const getPipeline = (name: string): pipeline.Pipeline | undefined => {
+    return pipelineMap[name]
+  }
+  React.useEffect(() => {
+    const map = {} as { [key: string]: pipeline.Pipeline }
+    pipelines.forEach(p => {
+      map[p.name] = p
+    })
+    setPipelineMap(map)
+  }, [pipelines])
+
+  const [expandValues, setExpandValues] = React.useState<{ [key: string]: boolean }>({})
   const getExpandValue = (server: httpserver.HTTPServer) => {
     return expandValues[server.name] || false
   }
   const setExpandValue = (server: httpserver.HTTPServer, value: boolean) => {
     setExpandValues({ ...expandValues, [server.name]: value })
+  }
+
+  const viewYaml = useViewYaml()
+
+  const deleteServer = useDeleteServer()
+  const confirmDeleteServer = () => {
+    const s = deleteServer.server
+    deleteServer.onClose()
+    deleteObject(cluster, s.name).then(() => {
+      mutate()
+      enqueueSnackbar(intl.formatMessage({ id: "app.general.deleteSuccess" }, { kind: s.kind, name: s.name }), { variant: 'success' })
+    }).catch(err => {
+      enqueueSnackbar(intl.formatMessage({ id: "app.general.deleteFailed" }, { kind: s.kind, name: s.name, error: catchErrorMessage(err) }), { variant: 'error' })
+    })
+  }
+
+  const editServer = useEditServer()
+  const handleEditServer = () => {
+    const s = editServer.server
+    editServer.onClose()
+    const { result, err } = loadYaml(editServer.yaml)
+    if (err !== "") {
+      enqueueSnackbar(intl.formatMessage({ id: 'app.general.invalidYaml' }, { error: err }), { variant: 'error' })
+      return
+    }
+    if (result.kind !== s.kind || result.name !== s.name) {
+      enqueueSnackbar(intl.formatMessage({ id: 'app.general.editChangeNameOrKind' }), { variant: 'error' })
+      return
+    }
+    updateObject(cluster, s, editServer.yaml).then(() => {
+      mutate()
+      enqueueSnackbar(intl.formatMessage({ id: 'app.general.editSuccess' }, { kind: s.kind, name: s.name }), { variant: 'success' })
+    }).catch(err => {
+      enqueueSnackbar(intl.formatMessage({ id: 'app.general.editFailed' }, { kind: s.kind, name: s.name, error: catchErrorMessage(err) }), { variant: 'error' })
+    })
   }
 
   // handle edge case
@@ -118,20 +166,39 @@ function TrafficContent(props: TrafficContentProps) {
 
   const actions = [
     {
+      // edit
       label: intl.formatMessage({ id: "app.general.actions.edit" }),
-      onClick: () => { }
+      onClick: (server: httpserver.HTTPServer) => {
+        editServer.onOpen(server)
+      }
     },
     {
+      // view yaml
       label: intl.formatMessage({ id: "app.general.actions.yaml" }),
-      onClick: () => { }
+      onClick: (server: httpserver.HTTPServer) => {
+        viewYaml.onOpen(yaml.dump(server))
+      }
     },
     {
+      // status
       label: intl.formatMessage({ id: "app.general.actions.status" }),
-      onClick: () => { }
+      onClick: (server: httpserver.HTTPServer) => {
+        getObjectStatus(cluster, server.name).then((status) => {
+          viewYaml.onOpen(yaml.dump(status))
+        }).catch(err => {
+          enqueueSnackbar(intl.formatMessage(
+            { id: 'app.general.getStatusFailed' },
+            { kind: server.kind, name: server.name, error: catchErrorMessage(err) }
+          ), { variant: 'error' })
+        })
+      }
     },
     {
+      // delete
       label: intl.formatMessage({ id: "app.general.actions.delete" }),
-      onClick: () => { },
+      onClick: (server: httpserver.HTTPServer) => {
+        deleteServer.onOpen(server)
+      },
       color: "error",
     },
   ]
@@ -150,33 +217,71 @@ function TrafficContent(props: TrafficContentProps) {
           </TableHead>
           <TableBody>
             {httpServers.map((server, index) => {
-              const data = getTableData(server)
               const open = getExpandValue(server)
               return (
-                <TrafficTableRow key={index} server={server} open={open} setOpen={setExpandValue} actions={actions} />
+                <TrafficTableRow key={index} server={server} open={open} setOpen={setExpandValue} actions={actions} openViewYaml={viewYaml.onOpen} getPipeline={getPipeline} />
               );
             })}
           </TableBody>
         </Table>
       </TableContainer>
+      {/* view only */}
+      <YamlEditorDialog
+        open={viewYaml.open}
+        onClose={viewYaml.onClose}
+        title={intl.formatMessage({ id: "app.general.actions.view" })}
+        yaml={viewYaml.yaml}
+        onYamlChange={() => { }}
+        editorOptions={{ readOnly: true }}
+      />
+      {/* delete */}
+      <SimpleDialog
+        open={deleteServer.open}
+        onClose={deleteServer.onClose}
+        title={intl.formatMessage({ id: "app.general.deleteConfirm" })}
+        actions={[{
+          label: intl.formatMessage({ id: "app.general.actions.delete" }),
+          onClick: confirmDeleteServer,
+          style: {
+            color: "error",
+          }
+        }]}
+      />
+      {/* edit */}
+      <YamlEditorDialog
+        open={editServer.open}
+        onClose={editServer.onClose}
+        title={intl.formatMessage({ id: "app.general.actions.edit" })}
+        yaml={editServer.yaml}
+        onYamlChange={(value, ev) => { editServer.onChange(value, ev) }}
+        actions={[
+          {
+            label: intl.formatMessage({ id: "app.general.actions.edit" }),
+            onClick: handleEditServer,
+          }
+        ]}
+      />
     </Paper >
   )
 }
 
 type TrafficTableRowProps = {
   server: httpserver.HTTPServer
+  getPipeline: (name: string) => pipeline.Pipeline | undefined
   open: boolean
   setOpen: (server: httpserver.HTTPServer, open: boolean) => void
+  openViewYaml: (yaml: string) => void
   actions: {
     label: string
-    onClick: () => void
+    onClick: (server: httpserver.HTTPServer) => void
     color?: string
   }[]
 }
 
 function TrafficTableRow(props: TrafficTableRowProps) {
-  const { server, open, setOpen, actions } = props
+  const { server, open, setOpen, actions, openViewYaml, getPipeline } = props
   const data = getTableData(server)
+  const showDetails = () => { setOpen(server, !open) }
 
   return (
     <React.Fragment>
@@ -184,19 +289,21 @@ function TrafficTableRow(props: TrafficTableRowProps) {
         {/* name */}
         <TableCell>
           <Stack direction="row" spacing={1} alignItems="center">
-            <IconButton size="small" onClick={() => { setOpen(server, !open) }}>
+            <IconButton size="small" onClick={showDetails}>
               {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
             </IconButton>
             <Image
+              onClick={showDetails}
               style={{
                 width: '48px',
                 height: '48px',
                 borderRadius: '50%',
                 border: '1px solid #dedede',
-              }}
+              }
+              }
               src={easegressSVG}
               alt="Easegres" />
-            <div>{data.name}</div>
+            <TextButton title={data.name} onClick={showDetails} />
           </Stack>
         </TableCell>
 
@@ -224,7 +331,7 @@ function TrafficTableRow(props: TrafficTableRowProps) {
             {actions.map((action, index) => {
               return <TextButton
                 key={index}
-                onClick={action.onClick}
+                onClick={() => { action.onClick(server) }}
                 title={action.label}
                 color={action.color}
               />
@@ -239,7 +346,7 @@ function TrafficTableRow(props: TrafficTableRowProps) {
               <Typography variant="h6" gutterBottom>
                 Routes
               </Typography>
-              <HTTPServerRuleTable server={server} />
+              <HTTPServerRuleTable server={server} onViewYaml={openViewYaml} getPipeline={getPipeline} />
             </Box>
           </Collapse>
         </TableCell>
@@ -249,6 +356,7 @@ function TrafficTableRow(props: TrafficTableRowProps) {
 }
 
 type HTTPServerRuleData = {
+  rule: httpserver.Rule
   hosts: string[]
   hostRegexps: string[]
   sameHost: boolean
@@ -279,6 +387,7 @@ function getAllHTTPServerRuleData(server: httpserver.HTTPServer) {
 
     rule.paths?.forEach(path => {
       const data: HTTPServerRuleData = {
+        rule: rule,
         hosts: hosts,
         hostRegexps: hostRegexps,
         sameHost: false,
@@ -299,10 +408,7 @@ function getAllHTTPServerRuleData(server: httpserver.HTTPServer) {
       return
     }
     const prevData = allData[index - 1]
-    if (prevData.hosts.length === 0 && prevData.hostRegexps.length === 0) {
-      return
-    }
-    if (_.isEqual(data.hosts, prevData.hosts) && _.isEqual(data.hostRegexps, prevData.hostRegexps)) {
+    if (_.isEqual(data.rule, prevData.rule)) {
       data.sameHost = true
     }
   })
@@ -311,23 +417,14 @@ function getAllHTTPServerRuleData(server: httpserver.HTTPServer) {
 
 type HTTPServerRuleTableProps = {
   server: httpserver.HTTPServer
+  getPipeline: (name: string) => pipeline.Pipeline | undefined
+  onViewYaml: (yaml: string) => void
 }
 
 function HTTPServerRuleTable(props: HTTPServerRuleTableProps) {
   const intl = useIntl()
+  const { onViewYaml, getPipeline } = props
   const allRuleData = getAllHTTPServerRuleData(props.server)
-  const [viewYaml, setViewYaml] = React.useState({
-    open: false,
-    yaml: "",
-  })
-
-  const onCloseViewYaml = () => {
-    setViewYaml({ open: false, yaml: "" })
-  }
-
-  const onOpenViewYaml = (yaml: string) => {
-    setViewYaml({ open: true, yaml: yaml })
-  }
 
   const tableHeads = [
     intl.formatMessage({ id: 'app.traffic.host' }),
@@ -336,6 +433,7 @@ function HTTPServerRuleTable(props: HTTPServerRuleTableProps) {
     intl.formatMessage({ id: 'app.traffic.headers' }),
     intl.formatMessage({ id: 'app.traffic.methods' }),
     intl.formatMessage({ id: 'app.traffic.pipeline' }),
+    intl.formatMessage({ id: 'app.general.actions' }),
   ]
 
   return (
@@ -351,11 +449,13 @@ function HTTPServerRuleTable(props: HTTPServerRuleTableProps) {
       </TableHead>
       <TableBody>
         {allRuleData.map((data, index) => {
+          const pipeline = getPipeline(data.pipeline)
+
           return (
             <TableRow key={index}>
               {/* host */}
               <TableCell>
-                {data.sameHost ? <Chip size="small" label="same as above" /> :
+                {data.sameHost ? <Chip size="small" label={intl.formatMessage({ id: "app.traffic.host.sameAsAbove" })} /> :
                   <React.Fragment>
                     {data.hosts.map((host, index) => {
                       return <div key={`host-${index}`}>{host}</div>
@@ -394,7 +494,7 @@ function HTTPServerRuleTable(props: HTTPServerRuleTableProps) {
                       <div>allow {data.ipFilter.allowIPs ? data.ipFilter.allowIPs.length : 0}</div>
                       <div>block {data.ipFilter.blockIPs ? data.ipFilter.blockIPs.length : 0}</div>
                     </Stack>
-                    <TextButton title="view" onClick={() => { onOpenViewYaml(yaml.dump(data.ipFilter)) }} />
+                    <TextButton title={intl.formatMessage({ id: "app.general.actions.view" })} onClick={() => { onViewYaml(yaml.dump(data.ipFilter)) }} />
                   </Stack> :
                   <div>Disabled</div>
                 }
@@ -410,7 +510,7 @@ function HTTPServerRuleTable(props: HTTPServerRuleTableProps) {
                     spacing={1}
                   >
                     <div>{data.headers.length}</div>
-                    <TextButton title="view" onClick={() => { onOpenViewYaml(yaml.dump(data.headers)) }} />
+                    <TextButton title={intl.formatMessage({ id: "app.general.actions.view" })} onClick={() => { onViewYaml(yaml.dump(data.headers)) }} />
                   </Stack> :
                   <div>-</div>}
               </TableCell>
@@ -422,21 +522,23 @@ function HTTPServerRuleTable(props: HTTPServerRuleTableProps) {
 
               {/* pipeline */}
               <TableCell>
-                {data.pipeline}
+                {pipeline ?
+                  <TextButton title={pipeline.name} onClick={() => { onViewYaml(yaml.dump(pipeline)) }} /> :
+                  <Tooltip title={intl.formatMessage({ id: "app.general.noResult" })}>
+                    <div>{data.pipeline}</div>
+                  </Tooltip>
+                }
+              </TableCell>
+
+              {/* actions */}
+              <TableCell>
+                <TextButton title={intl.formatMessage({ id: "app.general.actions.view" })} onClick={() => { onViewYaml(yaml.dump(data.rule)) }} />
               </TableCell>
 
             </TableRow>
           )
         })}
       </TableBody>
-      <YamlEditorDialog
-        open={viewYaml.open}
-        onClose={onCloseViewYaml}
-        title={"view yaml"}
-        yaml={viewYaml.yaml}
-        onYamlChange={() => { }}
-        editorOptions={{ readOnly: true }}
-      />
     </Table >
   )
 }
@@ -493,4 +595,67 @@ function CreateServerDialog({ open, onClose, cluster, mutate }: CreateServerDial
       actions={actions}
     />
   )
+}
+
+function useViewYaml() {
+  const [state, setState] = React.useState({
+    open: false,
+    yaml: "",
+  })
+  const onClose = () => {
+    setState({ open: false, yaml: "" })
+  }
+  const onOpen = (yaml: string) => {
+    setState({ open: true, yaml: yaml })
+  }
+  return {
+    open: state.open,
+    yaml: state.yaml,
+    onClose,
+    onOpen,
+  }
+}
+
+function useDeleteServer() {
+  const [state, setState] = React.useState({
+    open: false,
+    server: {} as httpserver.HTTPServer,
+  })
+  const onOpen = (server: httpserver.HTTPServer) => {
+    setState({ open: true, server: server })
+  }
+  const onClose = () => {
+    setState({ open: false, server: {} as httpserver.HTTPServer })
+  }
+  return {
+    open: state.open,
+    server: state.server,
+    onOpen,
+    onClose,
+  }
+}
+
+function useEditServer() {
+  const [state, setState] = React.useState({
+    open: false,
+    server: {} as httpserver.HTTPServer,
+    yaml: "",
+  })
+  const onOpen = (server: httpserver.HTTPServer) => {
+    setState({ open: true, server: server, yaml: yaml.dump(server) })
+  }
+  const onClose = () => {
+    setState({ open: false, server: {} as httpserver.HTTPServer, yaml: "" })
+  }
+  const onChange = (value: string | undefined, ev: any) => {
+    setState({ ...state, yaml: value || "" })
+  }
+  return {
+    open: state.open,
+    server: state.server,
+    yaml: state.yaml,
+    onOpen,
+    onClose,
+    onChange,
+  }
 }

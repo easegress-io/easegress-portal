@@ -4,6 +4,7 @@ import { ClusterType, getClientInfo } from "./cluster"
 import { urls } from "./urls"
 import { AxiosResponse } from "axios"
 import yaml from "js-yaml"
+import _ from "lodash"
 
 export type Object = {
   name: string
@@ -145,8 +146,8 @@ export async function createObject(cluster: ClusterType, objectYaml: string) {
   return await api.post(info.url, json, info.config)
 }
 
-export async function updateObject(cluster: ClusterType, objectYaml: string) {
-  const info = getClientInfo(cluster, urls.Objects)
+export async function updateObject(cluster: ClusterType, obj: Object, objectYaml: string) {
+  const info = getClientInfo(cluster, urls.ObjectItem(obj.name))
   const json = yamlToJson(objectYaml)
   return await api.put(info.url, json, info.config)
 }
@@ -154,4 +155,35 @@ export async function updateObject(cluster: ClusterType, objectYaml: string) {
 export async function deleteObject(cluster: ClusterType, objectName: string) {
   const info = getClientInfo(cluster, urls.ObjectItem(objectName))
   return await api.delete(info.url, info.config)
+}
+
+// Status is status of objects. Key is node name. Value is status.
+// Easegress api of status returns a map of node name to {spec, status}.
+export type Status = {
+  [key: string]: {
+    status: any
+  }
+}
+
+export async function getObjectStatus(cluster: ClusterType, objectName: string) {
+  const info = getClientInfo(cluster, urls.StatusObjectItemURL(objectName))
+  return await api.get(info.url, info.config).then(res => res.data).then(data => {
+    const status = data as {
+      [key: string]: {
+        spec: any
+        status: any
+      }
+    }
+    const result: Status = {}
+    _.map(status, (value, key) => {
+      const parts = key.split("/")
+      parts.shift()
+      if (parts.length < 1 || parts[0] !== objectName) {
+        return
+      }
+      const nodeName = parts.join("/")
+      result[nodeName || key] = value.status
+    })
+    return result
+  })
 }

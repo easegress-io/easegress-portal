@@ -99,7 +99,9 @@ function SingleCluster({ cluster }: { cluster: ClusterType }) {
           <ErrorAlert error={error} expand={errExpand} onClose={() => { setErrExpand(!errExpand) }} />
         )}
 
-        {!isNullOrUndefined(members) &&
+        {/* useSWR may use same data state and switch when we change page. 
+        Anyway, members can be Objects for a short time when switch page */}
+        {!isNullOrUndefined(members) && Array.isArray(members) &&
           <Grid container>
             {members!.map((member, index) => {
               return (

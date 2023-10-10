@@ -20,6 +20,7 @@ export const enUS = {
   'app.traffic.headers': 'Headers',
   'app.traffic.methods': 'Methods',
   'app.traffic.pipeline': 'Pipeline',
+  'app.traffic.host.sameAsAbove': "same as above",
 
   'app.general.name': 'Name',
   'app.general.invalidYaml': 'Invalid yaml, error: {error}',
@@ -30,8 +31,19 @@ export const enUS = {
   'app.general.actions.delete': 'Delete',
   'app.general.actions.yaml': 'YAML',
   'app.general.actions.status': 'Status',
+  'app.general.actions.view': 'View',
 
   'app.general.create': 'Create',
   'app.general.createSuccess': 'Create {kind} {name} success',
   'app.general.createFailed': 'Create {kind} {name} failed, error: {error}',
+
+  'app.general.getStatusFailed': 'Get status of {kind} {name} failed, error: {error}',
+
+  'app.general.deleteConfirm': "Are you sure to delete?",
+  'app.general.deleteSuccess': 'Delete {kind} {name} success',
+  'app.general.deleteFailed': 'Delete {kind} {name} failed, error: {error}',
+
+  'app.general.editSuccess': 'Edit {kind} {name} success',
+  'app.general.editFailed': 'Edit {kind} {name} failed, error: {error}',
+  'app.general.editChangeNameOrKind': 'Change name or kind is not allowed.',
 }
