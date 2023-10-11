@@ -30,6 +30,7 @@ export const enUS = {
   'app.general.invalidKind': 'Invalid kind, only support: {kinds}',
   'app.general.noResult': 'No result found.',
   'app.general.actions': 'Actions',
+  'app.general.actions.create': "Create",
   'app.general.actions.edit': 'Edit',
   'app.general.actions.delete': 'Delete',
   'app.general.actions.yaml': 'YAML',

@@ -18,29 +18,15 @@ import _ from 'lodash'
 import TextButton from "@/components/TextButton"
 import yaml from "js-yaml"
 import SimpleDialog from "@/components/SimpleDialog"
+import { useResourcesContext } from "../context"
 
 export default function Controller() {
-  const intl = useIntl()
   const { currentCluster } = useClusters()
-  const [search, setSearch] = React.useState("")
-  const [createControllerOpen, setCreateControllerOpen] = React.useState(false)
-
+  const { search } = useResourcesContext()
   const { objects, error, isLoading, mutate } = useObjects(currentCluster)
 
-  const searchBarButtons = [
-    {
-      icon: <AddIcon />,
-      label: intl.formatMessage({ id: 'app.controller.createController' }),
-      onClick: () => { setCreateControllerOpen(true) }
-    },
-  ]
-
   return (
-    <div>
-      <SearchBar search={search} onSearchChange={(value: string) => { setSearch(value) }} buttons={searchBarButtons} />
-      <CreateController open={createControllerOpen} onClose={() => { setCreateControllerOpen(false) }} cluster={currentCluster} mutate={mutate} />
-      <ControllerContent cluster={currentCluster} objects={objects} error={error} isLoading={isLoading} mutate={mutate} search={search} />
-    </div>
+    <ControllerContent cluster={currentCluster} objects={objects} error={error} isLoading={isLoading} mutate={mutate} search={search} />
   )
 }
 

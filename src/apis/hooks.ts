@@ -3,7 +3,7 @@ import useSWR, { SWRConfiguration } from 'swr'
 import { getObjects } from "./object";
 import React from "react";
 
-export const ClusterMembersKey = (cluster: ClusterType) => {
+export const getClusterMembersSWRKey = (cluster: ClusterType) => {
   return `members/${cluster.name}`
 }
 
@@ -12,7 +12,7 @@ export function useClusterMembers(cluster: ClusterType, config: SWRConfiguration
   // the key is import here. useSWR will use the key to cache data.
   // the name parameter here is not used, but to trick useSWR to refresh data when cluster changes.
   const { data, error, isLoading, mutate } = useSWR(
-    ClusterMembersKey(cluster),
+    getClusterMembersSWRKey(cluster),
     (name: string) => { return getClusterMembers(cluster) },
     config
   )
@@ -29,7 +29,7 @@ export function useClusterMembers(cluster: ClusterType, config: SWRConfiguration
   }
 }
 
-export const ObjectsKey = (cluster: ClusterType) => {
+export const getObjectsSWRKey = (cluster: ClusterType) => {
   return `objects/${cluster.name}`
 }
 
@@ -38,7 +38,7 @@ export function useObjects(cluster: ClusterType, config: SWRConfiguration | unde
   // the key is import here. useSWR will use the key to cache data.
   // the name parameter here is not used, but to trick useSWR to refresh data when cluster changes.
   const { data, error, isLoading, mutate } = useSWR(
-    ObjectsKey(cluster),
+    getObjectsSWRKey(cluster),
     (name: string) => { return getObjects(cluster) },
     config
   )
