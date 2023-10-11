@@ -1,7 +1,7 @@
 "use client"
 
 import { useObjects } from "@/apis/hooks"
-import { useClusters } from "../context"
+import { useClusters } from "@/app/context"
 import React from "react"
 import { Object, Objects, createObject, deleteObject, getObjectStatus, updateObject } from "@/apis/object"
 import { Box, Chip, CircularProgress, Collapse, IconButton, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, Typography } from "@mui/material"

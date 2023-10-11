@@ -3,7 +3,7 @@
 import React from "react"
 import { useIntl } from "react-intl"
 
-import { useClusters } from "../context"
+import { useClusters } from "../../context"
 import { ClusterType, MemberType } from "@/apis/cluster"
 import { isNullOrUndefined } from "@/common/utils"
 import clusterImage from '@/asserts/cluster.png'
