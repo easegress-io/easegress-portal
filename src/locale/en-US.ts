@@ -31,22 +31,20 @@ export const enUS = {
   'app.traffic.pipeline': 'Pipeline',
   'app.traffic.host.sameAsAbove': "same as above",
 
-  'app.controller.createController': 'Create Controller',
-
   'app.general.name': 'Name',
   'app.general.kind': 'Kind',
   'app.general.invalidYaml': 'Invalid yaml, error: {error}',
   'app.general.invalidKind': 'Invalid kind, only support: {kinds}',
   'app.general.noResult': 'No result found.',
   'app.general.actions': 'Actions',
-  'app.general.actions.create': "Create",
+  'app.general.actions.create': 'Create Resource',
   'app.general.actions.edit': 'Edit',
   'app.general.actions.delete': 'Delete',
   'app.general.actions.yaml': 'YAML',
   'app.general.actions.status': 'Status',
   'app.general.actions.view': 'View',
 
-  'app.general.create': 'Create',
+  'app.general.create': 'Create Resource',
   'app.general.createSuccess': 'Create {kind} {name} success',
   'app.general.createFailed': 'Create {kind} {name} failed, error: {error}',
 

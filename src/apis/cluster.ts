@@ -27,6 +27,35 @@ type ClientInfo = {
   config: AxiosRequestConfig
 }
 
+type EgctlConfig = {
+  kind: string
+  clusters: {
+    name: string
+    cluster: {
+      server: string
+      'certificate-authority-data': string // base64
+    }
+  }[]
+  users: {
+    name: string
+    user: {
+      'client-certificate-data': string // base64
+      'client-key-data': string         // base64
+      username: string
+      password: string
+    }
+  }[]
+  contexts: {
+    name: string
+    context: {
+      cluster: string
+      user: string
+    }
+  }[]
+
+  'current-context': string
+}
+
 export function getClientInfo(cluster: ClusterType, path: string): ClientInfo {
   // TODO: later may check protocol, and add auth, mtls to config
   return {
