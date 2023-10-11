@@ -3,14 +3,13 @@
 import { useObjects } from "@/apis/hooks"
 import { useClusters } from "@/app/context"
 import React from "react"
-import { EGObject, EGObjects, deleteObject, getObjectStatus, grpcserver, httpserver, pipeline, updateObject } from "@/apis/object"
-import { Box, ButtonBase, Chip, CircularProgress, Collapse, IconButton, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, Typography } from "@mui/material"
+import { EGObject, deleteObject, getObjectStatus, grpcserver, httpserver, pipeline, updateObject } from "@/apis/object"
+import { Box, ButtonBase, Chip, CircularProgress, Collapse, IconButton, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material"
 import { useIntl } from "react-intl"
 import YamlEditorDialog from "@/components/YamlEditorDialog"
 import { useSnackbar } from "notistack"
 import { catchErrorMessage, loadYaml } from "@/common/utils"
 import BlankPage from "@/components/BlankPage"
-import { ClusterType } from "@/apis/cluster"
 import ErrorAlert from "@/components/ErrorAlert"
 import _ from 'lodash'
 import TextButton from "@/components/TextButton"
@@ -22,38 +21,14 @@ import { useResourcesContext } from "../context"
 import { TableData } from "./types"
 import { HTTPServerRuleTable, getHTTPTableData } from "./http"
 import { GRPCServerRuleTable, getGRPCTableData } from "./grpc"
+import { useDeleteResource, useEditResource } from "../hooks"
 
 export default function Traffic() {
   const intl = useIntl()
   const { currentCluster } = useClusters()
-  const { search } = useResourcesContext()
+  const { search, openViewYaml } = useResourcesContext()
   const { objects, error, isLoading, mutate } = useObjects(currentCluster)
-
-  return (
-    <TrafficContent cluster={currentCluster} objects={objects} error={error} isLoading={isLoading} mutate={mutate} search={search} />
-  )
-}
-
-function getTableData(server: httpserver.HTTPServer | grpcserver.GRPCServer): TableData {
-  if (server.kind === "HTTPServer") {
-    return getHTTPTableData(server as httpserver.HTTPServer)
-  }
-  return getGRPCTableData(server as grpcserver.GRPCServer)
-}
-
-type TrafficContentProps = {
-  cluster: ClusterType
-  objects: EGObjects | undefined
-  search: string
-  error: any
-  isLoading: boolean
-  mutate: () => void
-}
-
-function TrafficContent(props: TrafficContentProps) {
-  const intl = useIntl()
   const { enqueueSnackbar } = useSnackbar()
-  const { cluster, objects, error, isLoading, mutate, search } = props
 
   const searchEGObject = (obejcts: EGObject[] | undefined): EGObject[] => {
     return obejcts?.filter(obj => {
@@ -84,38 +59,36 @@ function TrafficContent(props: TrafficContentProps) {
     setExpandValues({ ...expandValues, [server.name]: value })
   }
 
-  const viewYaml = useViewYaml()
-
-  const deleteServer = useDeleteServer()
+  const deleteServer = useDeleteResource()
   const confirmDeleteServer = () => {
-    const s = deleteServer.server
+    const resource = deleteServer.resource
     deleteServer.onClose()
-    deleteObject(cluster, s.name).then(() => {
+    deleteObject(currentCluster, resource.name).then(() => {
       mutate()
-      enqueueSnackbar(intl.formatMessage({ id: "app.general.deleteSuccess" }, { kind: s.kind, name: s.name }), { variant: 'success' })
+      enqueueSnackbar(intl.formatMessage({ id: "app.general.deleteSuccess" }, { kind: resource.kind, name: resource.name }), { variant: 'success' })
     }).catch(err => {
-      enqueueSnackbar(intl.formatMessage({ id: "app.general.deleteFailed" }, { kind: s.kind, name: s.name, error: catchErrorMessage(err) }), { variant: 'error' })
+      enqueueSnackbar(intl.formatMessage({ id: "app.general.deleteFailed" }, { kind: resource.kind, name: resource.name, error: catchErrorMessage(err) }), { variant: 'error' })
     })
   }
 
-  const editServer = useEditServer()
+  const editServer = useEditResource()
   const handleEditServer = () => {
-    const s = editServer.server
+    const resource = editServer.resource
     editServer.onClose()
     const { result, err } = loadYaml(editServer.yaml)
     if (err !== "") {
       enqueueSnackbar(intl.formatMessage({ id: 'app.general.invalidYaml' }, { error: err }), { variant: 'error' })
       return
     }
-    if (result.kind !== s.kind || result.name !== s.name) {
+    if (result.kind !== resource.kind || result.name !== resource.name) {
       enqueueSnackbar(intl.formatMessage({ id: 'app.general.editChangeNameOrKind' }), { variant: 'error' })
       return
     }
-    updateObject(cluster, s, editServer.yaml).then(() => {
+    updateObject(currentCluster, resource, editServer.yaml).then(() => {
       mutate()
-      enqueueSnackbar(intl.formatMessage({ id: 'app.general.editSuccess' }, { kind: s.kind, name: s.name }), { variant: 'success' })
+      enqueueSnackbar(intl.formatMessage({ id: 'app.general.editSuccess' }, { kind: resource.kind, name: resource.name }), { variant: 'success' })
     }).catch(err => {
-      enqueueSnackbar(intl.formatMessage({ id: 'app.general.editFailed' }, { kind: s.kind, name: s.name, error: catchErrorMessage(err) }), { variant: 'error' })
+      enqueueSnackbar(intl.formatMessage({ id: 'app.general.editFailed' }, { kind: resource.kind, name: resource.name, error: catchErrorMessage(err) }), { variant: 'error' })
     })
   }
 
@@ -146,15 +119,15 @@ function TrafficContent(props: TrafficContentProps) {
       // view yaml
       label: intl.formatMessage({ id: "app.general.actions.yaml" }),
       onClick: (server: EGObject) => {
-        viewYaml.onOpen(yaml.dump(server))
+        openViewYaml(yaml.dump(server))
       }
     },
     {
       // status
       label: intl.formatMessage({ id: "app.general.actions.status" }),
       onClick: (server: EGObject) => {
-        getObjectStatus(cluster, server.name).then((status) => {
-          viewYaml.onOpen(yaml.dump(status))
+        getObjectStatus(currentCluster, server.name).then((status) => {
+          openViewYaml(yaml.dump(status))
         }).catch(err => {
           enqueueSnackbar(intl.formatMessage(
             { id: 'app.general.getStatusFailed' },
@@ -189,27 +162,18 @@ function TrafficContent(props: TrafficContentProps) {
             {httpServers.map((server, index) => {
               const open = getExpandValue(server)
               return (
-                <TrafficTableRow key={`http-${index}`} server={server} open={open} setOpen={setExpandValue} actions={actions} openViewYaml={viewYaml.onOpen} getPipeline={getPipeline} />
+                <TrafficTableRow key={`http-${index}`} server={server} open={open} setOpen={setExpandValue} actions={actions} openViewYaml={openViewYaml} getPipeline={getPipeline} />
               );
             })}
             {grpcServers.map((server, index) => {
               const open = getExpandValue(server)
               return (
-                <TrafficTableRow key={`grpc-${index}`} server={server} open={open} setOpen={setExpandValue} actions={actions} openViewYaml={viewYaml.onOpen} getPipeline={getPipeline} />
+                <TrafficTableRow key={`grpc-${index}`} server={server} open={open} setOpen={setExpandValue} actions={actions} openViewYaml={openViewYaml} getPipeline={getPipeline} />
               );
             })}
           </TableBody>
         </Table>
       </TableContainer>
-      {/* view only */}
-      <YamlEditorDialog
-        open={viewYaml.open}
-        onClose={viewYaml.onClose}
-        title={intl.formatMessage({ id: "app.general.actions.view" })}
-        yaml={viewYaml.yaml}
-        onYamlChange={() => { }}
-        editorOptions={{ readOnly: true }}
-      />
       {/* delete */}
       <SimpleDialog
         open={deleteServer.open}
@@ -239,6 +203,13 @@ function TrafficContent(props: TrafficContentProps) {
       />
     </Paper >
   )
+}
+
+function getTableData(server: httpserver.HTTPServer | grpcserver.GRPCServer): TableData {
+  if (server.kind === "HTTPServer") {
+    return getHTTPTableData(server as httpserver.HTTPServer)
+  }
+  return getGRPCTableData(server as grpcserver.GRPCServer)
 }
 
 type TrafficTableRowProps = {
@@ -339,67 +310,4 @@ function TrafficTableRow(props: TrafficTableRowProps) {
       </TableRow>
     </React.Fragment >
   )
-}
-
-function useViewYaml() {
-  const [state, setState] = React.useState({
-    open: false,
-    yaml: "",
-  })
-  const onClose = () => {
-    setState({ open: false, yaml: "" })
-  }
-  const onOpen = (yaml: string) => {
-    setState({ open: true, yaml: yaml })
-  }
-  return {
-    open: state.open,
-    yaml: state.yaml,
-    onClose,
-    onOpen,
-  }
-}
-
-function useDeleteServer() {
-  const [state, setState] = React.useState({
-    open: false,
-    server: {} as EGObject,
-  })
-  const onOpen = (server: EGObject) => {
-    setState({ open: true, server: server })
-  }
-  const onClose = () => {
-    setState({ open: false, server: {} as EGObject })
-  }
-  return {
-    open: state.open,
-    server: state.server,
-    onOpen,
-    onClose,
-  }
-}
-
-function useEditServer() {
-  const [state, setState] = React.useState({
-    open: false,
-    server: {} as EGObject,
-    yaml: "",
-  })
-  const onOpen = (server: EGObject) => {
-    setState({ open: true, server: server, yaml: yaml.dump(server) })
-  }
-  const onClose = () => {
-    setState({ open: false, server: {} as EGObject, yaml: "" })
-  }
-  const onChange = (value: string | undefined, ev: any) => {
-    setState({ ...state, yaml: value || "" })
-  }
-  return {
-    open: state.open,
-    server: state.server,
-    yaml: state.yaml,
-    onOpen,
-    onClose,
-    onChange,
-  }
 }

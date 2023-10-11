@@ -19,6 +19,10 @@ export default function Layout({ children, }: { children: React.ReactNode }) {
   const intl = useIntl()
   const [search, setSearch] = React.useState("")
   const [createOpen, setCreateOpen] = React.useState(false)
+  const [viewYaml, setViewYaml] = React.useState({
+    open: false,
+    yaml: "",
+  })
 
   const searchBarButtons = [
     {
@@ -37,9 +41,20 @@ export default function Layout({ children, }: { children: React.ReactNode }) {
         cluster={currentCluster}
         mutate={() => { mutate(getObjectsSWRKey(currentCluster)) }}
       />
-      <ResourceContext.Provider value={{ search, setSearch }}>
+      <ResourceContext.Provider value={{
+        search, setSearch, viewYaml, setViewYaml
+      }}>
         {children}
       </ResourceContext.Provider>
+      {/* view only */}
+      <YamlEditorDialog
+        open={viewYaml.open}
+        onClose={() => { setViewYaml({ open: false, yaml: "" }) }}
+        title={intl.formatMessage({ id: "app.general.actions.view" })}
+        yaml={viewYaml.yaml}
+        onYamlChange={() => { }}
+        editorOptions={{ readOnly: true }}
+      />
     </div>
   )
 }

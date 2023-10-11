@@ -3,67 +3,36 @@
 import { useObjects } from "@/apis/hooks"
 import { useClusters } from "@/app/context"
 import React from "react"
-import { EGObject, EGObjects, createObject, deleteObject, getObjectStatus, updateObject } from "@/apis/object"
-import { Box, Chip, CircularProgress, Collapse, IconButton, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, Typography } from "@mui/material"
+import { EGObject, deleteObject, getObjectStatus, updateObject } from "@/apis/object"
+import { Box, Chip, CircularProgress, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material"
 import { useIntl } from "react-intl"
-import AddIcon from '@mui/icons-material/Add';
-import SearchBar from "@/components/SearchBar"
 import YamlEditorDialog from "@/components/YamlEditorDialog"
 import { useSnackbar } from "notistack"
 import { catchErrorMessage, loadYaml } from "@/common/utils"
 import BlankPage from "@/components/BlankPage"
-import { ClusterType } from "@/apis/cluster"
 import ErrorAlert from "@/components/ErrorAlert"
 import _ from 'lodash'
 import TextButton from "@/components/TextButton"
 import yaml from "js-yaml"
 import SimpleDialog from "@/components/SimpleDialog"
 import { useResourcesContext } from "../context"
+import { useDeleteResource, useEditResource } from "../hooks"
 
 export default function Controller() {
   const { currentCluster } = useClusters()
-  const { search } = useResourcesContext()
+  const { search, openViewYaml } = useResourcesContext()
   const { objects, error, isLoading, mutate } = useObjects(currentCluster)
-
-  return (
-    <ControllerContent cluster={currentCluster} objects={objects} error={error} isLoading={isLoading} mutate={mutate} search={search} />
-  )
-}
-
-type TableData = {
-  name: string
-  kind: string
-}
-
-function getTableData(controller: EGObject): TableData {
-  return {
-    name: controller.name,
-    kind: controller.kind
-  }
-}
-
-type ControllerContentProps = {
-  cluster: ClusterType
-  objects: EGObjects | undefined
-  search: string
-  error: any
-  isLoading: boolean
-  mutate: () => void
-}
-
-function ControllerContent(props: ControllerContentProps) {
   const intl = useIntl()
   const { enqueueSnackbar } = useSnackbar()
-  const { cluster, objects, error, isLoading, mutate, search } = props
-  const controllers = objects?.others || []
+  const controllers = objects?.others.filter(o => {
+    return o.name.includes(search)
+  }) || []
 
-  const viewYaml = useViewYaml()
-
-  const deleteController = useDeleteController()
+  const deleteController = useDeleteResource()
   const confirmDeleteController = () => {
-    const s = deleteController.contoller
+    const s = deleteController.resource
     deleteController.onClose()
-    deleteObject(cluster, s.name).then(() => {
+    deleteObject(currentCluster, s.name).then(() => {
       mutate()
       enqueueSnackbar(intl.formatMessage({ id: "app.general.deleteSuccess" }, { kind: s.kind, name: s.name }), { variant: 'success' })
     }).catch(err => {
@@ -71,24 +40,24 @@ function ControllerContent(props: ControllerContentProps) {
     })
   }
 
-  const editController = useEditController()
+  const editController = useEditResource()
   const handleEditController = () => {
-    const s = editController.controller
+    const resource = editController.resource
     editController.onClose()
     const { result, err } = loadYaml(editController.yaml)
     if (err !== "") {
       enqueueSnackbar(intl.formatMessage({ id: 'app.general.invalidYaml' }, { error: err }), { variant: 'error' })
       return
     }
-    if (result.kind !== s.kind || result.name !== s.name) {
+    if (result.kind !== resource.kind || result.name !== resource.name) {
       enqueueSnackbar(intl.formatMessage({ id: 'app.general.editChangeNameOrKind' }), { variant: 'error' })
       return
     }
-    updateObject(cluster, s, editController.yaml).then(() => {
+    updateObject(currentCluster, resource, editController.yaml).then(() => {
       mutate()
-      enqueueSnackbar(intl.formatMessage({ id: 'app.general.editSuccess' }, { kind: s.kind, name: s.name }), { variant: 'success' })
+      enqueueSnackbar(intl.formatMessage({ id: 'app.general.editSuccess' }, { kind: resource.kind, name: resource.name }), { variant: 'success' })
     }).catch(err => {
-      enqueueSnackbar(intl.formatMessage({ id: 'app.general.editFailed' }, { kind: s.kind, name: s.name, error: catchErrorMessage(err) }), { variant: 'error' })
+      enqueueSnackbar(intl.formatMessage({ id: 'app.general.editFailed' }, { kind: resource.kind, name: resource.name, error: catchErrorMessage(err) }), { variant: 'error' })
     })
   }
 
@@ -119,15 +88,15 @@ function ControllerContent(props: ControllerContentProps) {
       // view yaml
       label: intl.formatMessage({ id: "app.general.actions.yaml" }),
       onClick: (controller: EGObject) => {
-        viewYaml.onOpen(yaml.dump(controller))
+        openViewYaml(yaml.dump(controller))
       }
     },
     {
       // status
       label: intl.formatMessage({ id: "app.general.actions.status" }),
       onClick: (controller: EGObject) => {
-        getObjectStatus(cluster, controller.name).then((status) => {
-          viewYaml.onOpen(yaml.dump(status))
+        getObjectStatus(currentCluster, controller.name).then((status) => {
+          openViewYaml(yaml.dump(status))
         }).catch(err => {
           enqueueSnackbar(intl.formatMessage(
             { id: 'app.general.getStatusFailed' },
@@ -160,21 +129,12 @@ function ControllerContent(props: ControllerContentProps) {
           <TableBody>
             {controllers.map((controller, index) => {
               return (
-                <ControllerTableRow key={index} controller={controller} actions={actions} openViewYaml={viewYaml.onOpen} />
+                <ControllerTableRow key={index} controller={controller} actions={actions} openViewYaml={openViewYaml} />
               );
             })}
           </TableBody>
         </Table>
       </TableContainer>
-      {/* view only */}
-      <YamlEditorDialog
-        open={viewYaml.open}
-        onClose={viewYaml.onClose}
-        title={intl.formatMessage({ id: "app.general.actions.view" })}
-        yaml={viewYaml.yaml}
-        onYamlChange={() => { }}
-        editorOptions={{ readOnly: true }}
-      />
       {/* delete */}
       <SimpleDialog
         open={deleteController.open}
@@ -206,6 +166,18 @@ function ControllerContent(props: ControllerContentProps) {
   )
 }
 
+type TableData = {
+  name: string
+  kind: string
+}
+
+function getTableData(controller: EGObject): TableData {
+  return {
+    name: controller.name,
+    kind: controller.kind
+  }
+}
+
 type ControllerTableRowProps = {
   controller: EGObject
   openViewYaml: (yaml: string) => void
@@ -224,9 +196,11 @@ function ControllerTableRow(props: ControllerTableRowProps) {
     <React.Fragment>
       <TableRow hover role="checkbox">
         {/* name */}
-
         <TableCell>{data.name}</TableCell>
-        <TableCell>{data.kind}</TableCell>
+        {/* kind */}
+        <TableCell>
+          <Chip label={data.kind} color="primary" variant="outlined" size="small" />
+        </TableCell>
 
         {/* actions */}
         <TableCell>
@@ -248,118 +222,4 @@ function ControllerTableRow(props: ControllerTableRowProps) {
       </TableRow>
     </React.Fragment >
   )
-}
-
-
-type CreateControllerDialogProps = {
-  open: boolean
-  onClose: () => void
-  cluster: ClusterType
-  mutate: () => void
-}
-
-function CreateController({ open, onClose, cluster, mutate }: CreateControllerDialogProps) {
-  const intl = useIntl()
-  const [yamlDoc, setYamlDoc] = React.useState('')
-  const { enqueueSnackbar } = useSnackbar()
-
-  const onYamlChange = (value: string | undefined, ev: any) => {
-    setYamlDoc(value || '')
-  }
-
-  const actions = [
-    {
-      label: intl.formatMessage({ id: 'app.general.create' }),
-      onClick: () => {
-        const { result, err } = loadYaml(yamlDoc)
-        if (err !== "") {
-          enqueueSnackbar(intl.formatMessage({ id: 'app.general.invalidYaml' }, { error: err }), { variant: 'error' })
-          return
-        }
-        const object = result as EGObject
-
-        createObject(cluster, yamlDoc).then(() => {
-          mutate()
-          onClose()
-          enqueueSnackbar(intl.formatMessage({ id: 'app.general.createSuccess' }, { kind: object.kind, name: object.name }), { variant: 'success' })
-        }).catch((err) => {
-          enqueueSnackbar(intl.formatMessage({ id: 'app.general.createFailed' }, { kind: object.kind, name: object.name, error: catchErrorMessage(err) }), { variant: 'error' })
-        })
-      }
-    },
-  ]
-
-  return (
-    <YamlEditorDialog
-      open={open}
-      onClose={onClose}
-      title={intl.formatMessage({ id: 'app.controller.createController' })}
-      yaml={yamlDoc}
-      onYamlChange={onYamlChange}
-      actions={actions}
-    />
-  )
-}
-
-function useViewYaml() {
-  const [state, setState] = React.useState({
-    open: false,
-    yaml: "",
-  })
-  const onClose = () => {
-    setState({ open: false, yaml: "" })
-  }
-  const onOpen = (yaml: string) => {
-    setState({ open: true, yaml: yaml })
-  }
-  return {
-    open: state.open,
-    yaml: state.yaml,
-    onClose,
-    onOpen,
-  }
-}
-
-function useDeleteController() {
-  const [state, setState] = React.useState({
-    open: false,
-    controller: {} as EGObject,
-  })
-  const onOpen = (controller: EGObject) => {
-    setState({ open: true, controller: controller })
-  }
-  const onClose = () => {
-    setState({ open: false, controller: {} as EGObject })
-  }
-  return {
-    open: state.open,
-    contoller: state.controller,
-    onOpen,
-    onClose,
-  }
-}
-
-function useEditController() {
-  const [state, setState] = React.useState({
-    open: false,
-    controller: {} as EGObject,
-    yaml: "",
-  })
-  const onOpen = (controller: EGObject) => {
-    setState({ open: true, controller: controller, yaml: yaml.dump(controller) })
-  }
-  const onClose = () => {
-    setState({ open: false, controller: {} as EGObject, yaml: "" })
-  }
-  const onChange = (value: string | undefined, ev: any) => {
-    setState({ ...state, yaml: value || "" })
-  }
-  return {
-    open: state.open,
-    controller: state.controller,
-    yaml: state.yaml,
-    onOpen,
-    onClose,
-    onChange,
-  }
 }
