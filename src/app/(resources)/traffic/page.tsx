@@ -289,7 +289,6 @@ function TrafficTableRow(props: TrafficTableRowProps) {
         <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={100}>
           <Collapse in={open} timeout="auto" unmountOnExit>
             <Box sx={{ margin: 1 }}>
-              {/* <HTTPServerRuleTable server={server} onViewYaml={openViewYaml} getPipeline={getPipeline} /> */}
               {server.kind === "HTTPServer" ?
                 <React.Fragment>
                   <Typography variant="h6" gutterBottom>

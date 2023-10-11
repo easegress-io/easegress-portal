@@ -10,6 +10,13 @@ export const enUS = {
   'app.controller': 'Controller',
 
   'app.pipeline': 'Pipeline',
+  'app.pipeline.filter': 'Filter',
+  'app.pipeline.flow': 'Flow',
+  'app.pipeline.tags': 'Tags',
+  'app.pipeline.usedBy': 'Used By',
+  'app.pipeline.jumpIf': 'JumpIf',
+  'app.pipeline.resilience': 'Resilience',
+  'app.pipeline.alias': 'Alias',
 
   'app.traffic': 'Traffic',
   'app.traffic.createServer': 'Create Server',
