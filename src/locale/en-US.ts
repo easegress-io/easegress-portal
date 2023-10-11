@@ -18,6 +18,8 @@ export const enUS = {
   'app.traffic.path': 'Path',
   'app.traffic.ipFilter': 'IP Filter',
   'app.traffic.headers': 'Headers',
+  'app.traffic.routes': "Routes",
+  'app.traffic.method': 'Method',
   'app.traffic.methods': 'Methods',
   'app.traffic.pipeline': 'Pipeline',
   'app.traffic.host.sameAsAbove': "same as above",

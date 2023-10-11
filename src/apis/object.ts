@@ -6,19 +6,19 @@ import { AxiosResponse } from "axios"
 import yaml from "js-yaml"
 import _ from "lodash"
 
-export type Object = {
+export type EGObject = {
   name: string
   kind: string
 }
 
 export namespace pipeline {
-  export type Pipeline = Object & {
+  export type Pipeline = EGObject & {
     flow: FlowNode[]
     filters: Filter[]
     resilience: Resilience[]
   }
 
-  export type Filter = Object & {
+  export type Filter = EGObject & {
     [key: string]: any
   }
 
@@ -31,13 +31,13 @@ export namespace pipeline {
     }
   }
 
-  export type Resilience = Object & {
+  export type Resilience = EGObject & {
     [key: string]: any
   }
 }
 
 export namespace httpserver {
-  export type HTTPServer = Object & {
+  export type HTTPServer = EGObject & {
     rules: Rule[]
     port: number
     // add others when necessary
@@ -107,27 +107,69 @@ export namespace httpserver {
   export type Query = Header
 }
 
+export namespace grpcserver {
+  export type GRPCServer = EGObject & {
+    rules: Rule[]
+    port: number
+    // add others when necessary
+    // [key: string]: any
+  }
+
+  export type Rule = {
+    ipFilter: IPFilter | undefined
+    host: string | undefined
+    hostRegexp: string | undefined
+    methods: Method[] | undefined
+  }
+
+  export type Method = {
+    ipFilter: IPFilter | undefined
+    method: string
+    methodPrefix: string
+    methodRegexp: string
+    backend: string
+    matchAllHeader: boolean
+    headers: Header[] | undefined
+  }
+
+  export type Header = {
+    key: string
+    values: string[] | undefined
+    regexp: string | undefined
+  }
+
+  export type IPFilter = httpserver.IPFilter
+
+  export function isIPFilterEmpty(ipFilter: IPFilter | undefined): boolean {
+    return httpserver.isIPFilterEmpty(ipFilter)
+  }
+}
+
 // define a type that split obejcts into different kinds
-export type Objects = {
+export type EGObjects = {
   pipelines: pipeline.Pipeline[]
   httpServers: httpserver.HTTPServer[]
-  others: Object[]
+  grpcServers: grpcserver.GRPCServer[]
+  others: EGObject[]
 }
 
 export async function getObjects(cluster: ClusterType) {
   const info = getClientInfo(cluster, urls.Objects)
-  return await api.get<any, AxiosResponse<Object[]>>(info.url, info.config).then(res => res.data).then(data => {
-    const result: Objects = {
+  return await api.get<any, AxiosResponse<EGObject[]>>(info.url, info.config).then(res => res.data).then(data => {
+    const result: EGObjects = {
       pipelines: [],
       httpServers: [],
+      grpcServers: [],
       others: []
     }
 
-    data.forEach((obj: Object) => {
+    data.forEach((obj: EGObject) => {
       if (obj.kind === "Pipeline") {
         result.pipelines.push(obj as pipeline.Pipeline)
       } else if (obj.kind === "HTTPServer") {
         result.httpServers.push(obj as httpserver.HTTPServer)
+      } else if (obj.kind === "GRPCServer") {
+        result.grpcServers.push(obj as grpcserver.GRPCServer)
       } else {
         result.others.push(obj)
       }
@@ -146,7 +188,7 @@ export async function createObject(cluster: ClusterType, objectYaml: string) {
   return await api.post(info.url, json, info.config)
 }
 
-export async function updateObject(cluster: ClusterType, obj: Object, objectYaml: string) {
+export async function updateObject(cluster: ClusterType, obj: EGObject, objectYaml: string) {
   const info = getClientInfo(cluster, urls.ObjectItem(obj.name))
   const json = yamlToJson(objectYaml)
   return await api.put(info.url, json, info.config)

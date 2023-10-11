@@ -3,7 +3,7 @@
 import { useObjects } from "@/apis/hooks"
 import { useClusters } from "@/app/context"
 import React from "react"
-import { Object, Objects, createObject, deleteObject, getObjectStatus, updateObject } from "@/apis/object"
+import { EGObject, EGObjects, createObject, deleteObject, getObjectStatus, updateObject } from "@/apis/object"
 import { Box, Chip, CircularProgress, Collapse, IconButton, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, Typography } from "@mui/material"
 import { useIntl } from "react-intl"
 import AddIcon from '@mui/icons-material/Add';
@@ -35,7 +35,7 @@ type TableData = {
   kind: string
 }
 
-function getTableData(controller: Object): TableData {
+function getTableData(controller: EGObject): TableData {
   return {
     name: controller.name,
     kind: controller.kind
@@ -44,7 +44,7 @@ function getTableData(controller: Object): TableData {
 
 type ControllerContentProps = {
   cluster: ClusterType
-  objects: Objects | undefined
+  objects: EGObjects | undefined
   search: string
   error: any
   isLoading: boolean
@@ -111,21 +111,21 @@ function ControllerContent(props: ControllerContentProps) {
     {
       // edit
       label: intl.formatMessage({ id: "app.general.actions.edit" }),
-      onClick: (controller: Object) => {
+      onClick: (controller: EGObject) => {
         editController.onOpen(controller)
       }
     },
     {
       // view yaml
       label: intl.formatMessage({ id: "app.general.actions.yaml" }),
-      onClick: (controller: Object) => {
+      onClick: (controller: EGObject) => {
         viewYaml.onOpen(yaml.dump(controller))
       }
     },
     {
       // status
       label: intl.formatMessage({ id: "app.general.actions.status" }),
-      onClick: (controller: Object) => {
+      onClick: (controller: EGObject) => {
         getObjectStatus(cluster, controller.name).then((status) => {
           viewYaml.onOpen(yaml.dump(status))
         }).catch(err => {
@@ -139,7 +139,7 @@ function ControllerContent(props: ControllerContentProps) {
     {
       // delete
       label: intl.formatMessage({ id: "app.general.actions.delete" }),
-      onClick: (controller: Object) => {
+      onClick: (controller: EGObject) => {
         deleteController.onOpen(controller)
       },
       color: "error",
@@ -207,11 +207,11 @@ function ControllerContent(props: ControllerContentProps) {
 }
 
 type ControllerTableRowProps = {
-  controller: Object
+  controller: EGObject
   openViewYaml: (yaml: string) => void
   actions: {
     label: string
-    onClick: (controller: Object) => void
+    onClick: (controller: EGObject) => void
     color?: string
   }[]
 }
@@ -276,7 +276,7 @@ function CreateController({ open, onClose, cluster, mutate }: CreateControllerDi
           enqueueSnackbar(intl.formatMessage({ id: 'app.general.invalidYaml' }, { error: err }), { variant: 'error' })
           return
         }
-        const object = result as Object
+        const object = result as EGObject
 
         createObject(cluster, yamlDoc).then(() => {
           mutate()
@@ -323,13 +323,13 @@ function useViewYaml() {
 function useDeleteController() {
   const [state, setState] = React.useState({
     open: false,
-    controller: {} as Object,
+    controller: {} as EGObject,
   })
-  const onOpen = (controller: Object) => {
+  const onOpen = (controller: EGObject) => {
     setState({ open: true, controller: controller })
   }
   const onClose = () => {
-    setState({ open: false, controller: {} as Object })
+    setState({ open: false, controller: {} as EGObject })
   }
   return {
     open: state.open,
@@ -342,14 +342,14 @@ function useDeleteController() {
 function useEditController() {
   const [state, setState] = React.useState({
     open: false,
-    controller: {} as Object,
+    controller: {} as EGObject,
     yaml: "",
   })
-  const onOpen = (controller: Object) => {
+  const onOpen = (controller: EGObject) => {
     setState({ open: true, controller: controller, yaml: yaml.dump(controller) })
   }
   const onClose = () => {
-    setState({ open: false, controller: {} as Object, yaml: "" })
+    setState({ open: false, controller: {} as EGObject, yaml: "" })
   }
   const onChange = (value: string | undefined, ev: any) => {
     setState({ ...state, yaml: value || "" })

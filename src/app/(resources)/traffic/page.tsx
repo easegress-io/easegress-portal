@@ -3,8 +3,8 @@
 import { useObjects } from "@/apis/hooks"
 import { useClusters } from "@/app/context"
 import React from "react"
-import { Objects, deleteObject, getObjectStatus, httpserver, pipeline, updateObject } from "@/apis/object"
-import { Box, Chip, CircularProgress, Collapse, IconButton, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, Typography } from "@mui/material"
+import { EGObject, EGObjects, deleteObject, getObjectStatus, grpcserver, httpserver, pipeline, updateObject } from "@/apis/object"
+import { Box, ButtonBase, Chip, CircularProgress, Collapse, IconButton, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tooltip, Typography } from "@mui/material"
 import { useIntl } from "react-intl"
 import YamlEditorDialog from "@/components/YamlEditorDialog"
 import { useSnackbar } from "notistack"
@@ -14,13 +14,14 @@ import { ClusterType } from "@/apis/cluster"
 import ErrorAlert from "@/components/ErrorAlert"
 import _ from 'lodash'
 import TextButton from "@/components/TextButton"
-import Image from "next/image"
-import easegressSVG from '@/asserts/easegress.svg'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import yaml from "js-yaml"
 import SimpleDialog from "@/components/SimpleDialog"
 import { useResourcesContext } from "../context"
+import { TableData } from "./types"
+import { HTTPServerRuleTable, getHTTPTableData } from "./http"
+import { GRPCServerRuleTable, getGRPCTableData } from "./grpc"
 
 export default function Traffic() {
   const intl = useIntl()
@@ -33,39 +34,16 @@ export default function Traffic() {
   )
 }
 
-type TableData = {
-  name: string
-  hosts: string[]
-  hostRegexps: string[]
-  port: number
-}
-
-function getTableData(httpServer: httpserver.HTTPServer): TableData {
-  const hosts: string[] = []
-  const hostRegexps: string[] = []
-  httpServer.rules?.forEach(rule => {
-    rule.host && hosts.push(rule.host)
-    rule.hostRegexp && hostRegexps.push(rule.hostRegexp)
-    rule.hosts && rule.hosts.forEach(host => {
-      if (host.isRegexp) {
-        hostRegexps.push(host.value)
-      } else {
-        hosts.push(host.value)
-      }
-    })
-  })
-
-  return {
-    name: httpServer.name,
-    hosts: _.uniq(hosts.filter(host => { return host !== "" })),
-    hostRegexps: _.uniq(hostRegexps.filter(host => { return host !== "" })),
-    port: httpServer.port,
+function getTableData(server: httpserver.HTTPServer | grpcserver.GRPCServer): TableData {
+  if (server.kind === "HTTPServer") {
+    return getHTTPTableData(server as httpserver.HTTPServer)
   }
+  return getGRPCTableData(server as grpcserver.GRPCServer)
 }
 
 type TrafficContentProps = {
   cluster: ClusterType
-  objects: Objects | undefined
+  objects: EGObjects | undefined
   search: string
   error: any
   isLoading: boolean
@@ -76,9 +54,16 @@ function TrafficContent(props: TrafficContentProps) {
   const intl = useIntl()
   const { enqueueSnackbar } = useSnackbar()
   const { cluster, objects, error, isLoading, mutate, search } = props
-  const httpServers = objects?.httpServers?.filter(server => { return server.name.includes(search) }) || []
-  const pipelines = objects?.pipelines || []
 
+  const searchEGObject = (obejcts: EGObject[] | undefined): EGObject[] => {
+    return obejcts?.filter(obj => {
+      return obj.name.includes(search) || obj.kind.toLowerCase().includes(search.toLowerCase())
+    }) || []
+  }
+  const httpServers = searchEGObject(objects?.httpServers) as httpserver.HTTPServer[]
+  const grpcServers = searchEGObject(objects?.grpcServers) as grpcserver.GRPCServer[]
+
+  const pipelines = objects?.pipelines || []
   const [pipelineMap, setPipelineMap] = React.useState({} as { [key: string]: pipeline.Pipeline })
   const getPipeline = (name: string): pipeline.Pipeline | undefined => {
     return pipelineMap[name]
@@ -92,10 +77,10 @@ function TrafficContent(props: TrafficContentProps) {
   }, [pipelines])
 
   const [expandValues, setExpandValues] = React.useState<{ [key: string]: boolean }>({})
-  const getExpandValue = (server: httpserver.HTTPServer) => {
+  const getExpandValue = (server: EGObject) => {
     return expandValues[server.name] || false
   }
-  const setExpandValue = (server: httpserver.HTTPServer, value: boolean) => {
+  const setExpandValue = (server: EGObject, value: boolean) => {
     setExpandValues({ ...expandValues, [server.name]: value })
   }
 
@@ -145,7 +130,7 @@ function TrafficContent(props: TrafficContentProps) {
   if (error) {
     return <ErrorAlert error={error} expand={true} onClose={() => { }} />
   }
-  if (httpServers.length === 0) {
+  if (httpServers.length === 0 && grpcServers.length === 0) {
     return <BlankPage description={intl.formatMessage({ id: "app.general.noResult" })} />
   }
 
@@ -153,21 +138,21 @@ function TrafficContent(props: TrafficContentProps) {
     {
       // edit
       label: intl.formatMessage({ id: "app.general.actions.edit" }),
-      onClick: (server: httpserver.HTTPServer) => {
+      onClick: (server: EGObject) => {
         editServer.onOpen(server)
       }
     },
     {
       // view yaml
       label: intl.formatMessage({ id: "app.general.actions.yaml" }),
-      onClick: (server: httpserver.HTTPServer) => {
+      onClick: (server: EGObject) => {
         viewYaml.onOpen(yaml.dump(server))
       }
     },
     {
       // status
       label: intl.formatMessage({ id: "app.general.actions.status" }),
-      onClick: (server: httpserver.HTTPServer) => {
+      onClick: (server: EGObject) => {
         getObjectStatus(cluster, server.name).then((status) => {
           viewYaml.onOpen(yaml.dump(status))
         }).catch(err => {
@@ -181,7 +166,7 @@ function TrafficContent(props: TrafficContentProps) {
     {
       // delete
       label: intl.formatMessage({ id: "app.general.actions.delete" }),
-      onClick: (server: httpserver.HTTPServer) => {
+      onClick: (server: EGObject) => {
         deleteServer.onOpen(server)
       },
       color: "error",
@@ -204,7 +189,13 @@ function TrafficContent(props: TrafficContentProps) {
             {httpServers.map((server, index) => {
               const open = getExpandValue(server)
               return (
-                <TrafficTableRow key={index} server={server} open={open} setOpen={setExpandValue} actions={actions} openViewYaml={viewYaml.onOpen} getPipeline={getPipeline} />
+                <TrafficTableRow key={`http-${index}`} server={server} open={open} setOpen={setExpandValue} actions={actions} openViewYaml={viewYaml.onOpen} getPipeline={getPipeline} />
+              );
+            })}
+            {grpcServers.map((server, index) => {
+              const open = getExpandValue(server)
+              return (
+                <TrafficTableRow key={`grpc-${index}`} server={server} open={open} setOpen={setExpandValue} actions={actions} openViewYaml={viewYaml.onOpen} getPipeline={getPipeline} />
               );
             })}
           </TableBody>
@@ -251,22 +242,29 @@ function TrafficContent(props: TrafficContentProps) {
 }
 
 type TrafficTableRowProps = {
-  server: httpserver.HTTPServer
+  server: httpserver.HTTPServer | grpcserver.GRPCServer
   getPipeline: (name: string) => pipeline.Pipeline | undefined
   open: boolean
-  setOpen: (server: httpserver.HTTPServer, open: boolean) => void
+  setOpen: (server: EGObject, open: boolean) => void
   openViewYaml: (yaml: string) => void
   actions: {
     label: string
-    onClick: (server: httpserver.HTTPServer) => void
+    onClick: (server: EGObject) => void
     color?: string
   }[]
 }
 
 function TrafficTableRow(props: TrafficTableRowProps) {
+  const intl = useIntl()
   const { server, open, setOpen, actions, openViewYaml, getPipeline } = props
   const data = getTableData(server)
   const showDetails = () => { setOpen(server, !open) }
+  const getKindChipLabel = (kind: string) => {
+    if (kind === "HTTPServer") {
+      return "HTTP"
+    }
+    return "GRPC"
+  }
 
   return (
     <React.Fragment>
@@ -277,18 +275,10 @@ function TrafficTableRow(props: TrafficTableRowProps) {
             <IconButton size="small" onClick={showDetails}>
               {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
             </IconButton>
-            <Image
-              onClick={showDetails}
-              style={{
-                width: '48px',
-                height: '48px',
-                borderRadius: '50%',
-                border: '1px solid #dedede',
-              }
-              }
-              src={easegressSVG}
-              alt="Easegres" />
-            <TextButton title={data.name} onClick={showDetails} />
+            <ButtonBase onClick={showDetails}>
+              <Typography fontSize={16} color={"primary"}>{data.name}</Typography>
+            </ButtonBase>
+            <Chip label={getKindChipLabel(data.kind)} color="primary" variant="outlined" size="small" />
           </Stack>
         </TableCell>
 
@@ -328,203 +318,26 @@ function TrafficTableRow(props: TrafficTableRowProps) {
         <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={100}>
           <Collapse in={open} timeout="auto" unmountOnExit>
             <Box sx={{ margin: 1 }}>
-              <Typography variant="h6" gutterBottom>
-                Routes
-              </Typography>
-              <HTTPServerRuleTable server={server} onViewYaml={openViewYaml} getPipeline={getPipeline} />
+              {/* <HTTPServerRuleTable server={server} onViewYaml={openViewYaml} getPipeline={getPipeline} /> */}
+              {server.kind === "HTTPServer" ?
+                <React.Fragment>
+                  <Typography variant="h6" gutterBottom>
+                    {intl.formatMessage({ id: "app.traffic.routes" })}
+                  </Typography>
+                  <HTTPServerRuleTable server={server as httpserver.HTTPServer} onViewYaml={openViewYaml} getPipeline={getPipeline} />
+                </React.Fragment> :
+                <React.Fragment>
+                  <Typography variant="h6" gutterBottom>
+                    {intl.formatMessage({ id: "app.traffic.methods" })}
+                  </Typography>
+                  <GRPCServerRuleTable server={server as grpcserver.GRPCServer} onViewYaml={openViewYaml} getPipeline={getPipeline} />
+                </React.Fragment>
+              }
             </Box>
           </Collapse>
         </TableCell>
       </TableRow>
     </React.Fragment >
-  )
-}
-
-type HTTPServerRuleData = {
-  rule: httpserver.Rule
-  hosts: string[]
-  hostRegexps: string[]
-  sameHost: boolean
-  path: string
-  pathPrefix: string
-  pathRegexp: string
-  ipFilter: httpserver.IPFilter | undefined
-  headers: httpserver.Header[] | undefined
-  methods: string[] | undefined
-  pipeline: string
-}
-
-function getAllHTTPServerRuleData(server: httpserver.HTTPServer) {
-  const allData: HTTPServerRuleData[] = []
-
-  server.rules?.forEach(rule => {
-    const hosts: string[] = []
-    const hostRegexps: string[] = []
-    rule.host && hosts.push(rule.host)
-    rule.hostRegexp && hostRegexps.push(rule.hostRegexp)
-    rule.hosts && rule.hosts.forEach(host => {
-      if (host.isRegexp) {
-        hostRegexps.push(host.value)
-      } else {
-        hosts.push(host.value)
-      }
-    })
-
-    rule.paths?.forEach(path => {
-      const data: HTTPServerRuleData = {
-        rule: rule,
-        hosts: hosts,
-        hostRegexps: hostRegexps,
-        sameHost: false,
-        path: path.path || "",
-        pathPrefix: path.pathPrefix || "",
-        pathRegexp: path.pathRegexp || "",
-        ipFilter: httpserver.isIPFilterEmpty(path.ipFilter) ? (httpserver.isIPFilterEmpty(rule.ipFilter) ? undefined : rule.ipFilter) : path.ipFilter,
-        headers: httpserver.isHeadersEmpty(path.headers) ? undefined : path.headers,
-        methods: (path.methods && path.methods.length > 0) ? path.methods : undefined,
-        pipeline: path.backend,
-      }
-      allData.push(data)
-    })
-  })
-
-  allData.forEach((data, index) => {
-    if (index === 0) {
-      return
-    }
-    const prevData = allData[index - 1]
-    if (_.isEqual(data.rule, prevData.rule)) {
-      data.sameHost = true
-    }
-  })
-  return allData
-}
-
-type HTTPServerRuleTableProps = {
-  server: httpserver.HTTPServer
-  getPipeline: (name: string) => pipeline.Pipeline | undefined
-  onViewYaml: (yaml: string) => void
-}
-
-function HTTPServerRuleTable(props: HTTPServerRuleTableProps) {
-  const intl = useIntl()
-  const { onViewYaml, getPipeline } = props
-  const allRuleData = getAllHTTPServerRuleData(props.server)
-
-  const tableHeads = [
-    intl.formatMessage({ id: 'app.traffic.host' }),
-    intl.formatMessage({ id: 'app.traffic.path' }),
-    intl.formatMessage({ id: 'app.traffic.ipFilter' }),
-    intl.formatMessage({ id: 'app.traffic.headers' }),
-    intl.formatMessage({ id: 'app.traffic.methods' }),
-    intl.formatMessage({ id: 'app.traffic.pipeline' }),
-    intl.formatMessage({ id: 'app.general.actions' }),
-  ]
-
-  return (
-    <Table size="small">
-      <TableHead>
-        <TableRow>
-          {tableHeads.map((head, index) => {
-            return (
-              <TableCell key={index}>{head}</TableCell>
-            )
-          })}
-        </TableRow>
-      </TableHead>
-      <TableBody>
-        {allRuleData.map((data, index) => {
-          const pipeline = getPipeline(data.pipeline)
-
-          return (
-            <TableRow key={index}>
-              {/* host */}
-              <TableCell>
-                {data.sameHost ? <Chip size="small" label={intl.formatMessage({ id: "app.traffic.host.sameAsAbove" })} /> :
-                  <React.Fragment>
-                    {data.hosts.map((host, index) => {
-                      return <div key={`host-${index}`}>{host}</div>
-                    })}
-                    {data.hostRegexps.map((host, index) => {
-                      return <div key={`hostRegexp-${index}`}>{host} <Chip size="small" label={"regexp"} /></div>
-                    })}
-                    {data.hosts.length === 0 && data.hostRegexps.length === 0 && <div>*</div>}
-                  </React.Fragment>
-                }
-              </TableCell>
-
-
-              {/* path */}
-              <TableCell>
-                {(data.path.length > 0) && <div>{data.path}</div>}
-                {(data.pathPrefix.length > 0) && <div>{data.pathPrefix} <Chip size="small" label="prefix" /></div>}
-                {(data.pathRegexp.length > 0) && <div>{data.pathRegexp} <Chip size="small" label="regexp" /></div>}
-              </TableCell>
-
-              {/* ipFilter */}
-              <TableCell>
-                {data.ipFilter ?
-                  <Stack
-                    direction="row"
-                    justifyContent="flex-start"
-                    alignItems="center"
-                    spacing={1}
-                  >
-                    <Stack
-                      direction="column"
-                      justifyContent="center"
-                      alignItems="flex-start"
-                      spacing={0}
-                    >
-                      <div>allow {data.ipFilter.allowIPs ? data.ipFilter.allowIPs.length : 0}</div>
-                      <div>block {data.ipFilter.blockIPs ? data.ipFilter.blockIPs.length : 0}</div>
-                    </Stack>
-                    <TextButton title={intl.formatMessage({ id: "app.general.actions.view" })} onClick={() => { onViewYaml(yaml.dump(data.ipFilter)) }} />
-                  </Stack> :
-                  <div>Disabled</div>
-                }
-              </TableCell>
-
-              {/* headers */}
-              <TableCell>
-                {data.headers ?
-                  <Stack
-                    direction="row"
-                    justifyContent="flex-start"
-                    alignItems="center"
-                    spacing={1}
-                  >
-                    <div>{data.headers.length}</div>
-                    <TextButton title={intl.formatMessage({ id: "app.general.actions.view" })} onClick={() => { onViewYaml(yaml.dump(data.headers)) }} />
-                  </Stack> :
-                  <div>-</div>}
-              </TableCell>
-
-              {/* methods */}
-              <TableCell>
-                {data.methods ? <pre>{data.methods.join("\n")}</pre> : <div>*</div>}
-              </TableCell>
-
-              {/* pipeline */}
-              <TableCell>
-                {pipeline ?
-                  <TextButton title={pipeline.name} onClick={() => { onViewYaml(yaml.dump(pipeline)) }} /> :
-                  <Tooltip title={intl.formatMessage({ id: "app.general.noResult" })}>
-                    <div>{data.pipeline}</div>
-                  </Tooltip>
-                }
-              </TableCell>
-
-              {/* actions */}
-              <TableCell>
-                <TextButton title={intl.formatMessage({ id: "app.general.actions.view" })} onClick={() => { onViewYaml(yaml.dump(data.rule)) }} />
-              </TableCell>
-
-            </TableRow>
-          )
-        })}
-      </TableBody>
-    </Table >
   )
 }
 
@@ -550,13 +363,13 @@ function useViewYaml() {
 function useDeleteServer() {
   const [state, setState] = React.useState({
     open: false,
-    server: {} as httpserver.HTTPServer,
+    server: {} as EGObject,
   })
-  const onOpen = (server: httpserver.HTTPServer) => {
+  const onOpen = (server: EGObject) => {
     setState({ open: true, server: server })
   }
   const onClose = () => {
-    setState({ open: false, server: {} as httpserver.HTTPServer })
+    setState({ open: false, server: {} as EGObject })
   }
   return {
     open: state.open,
@@ -569,14 +382,14 @@ function useDeleteServer() {
 function useEditServer() {
   const [state, setState] = React.useState({
     open: false,
-    server: {} as httpserver.HTTPServer,
+    server: {} as EGObject,
     yaml: "",
   })
-  const onOpen = (server: httpserver.HTTPServer) => {
+  const onOpen = (server: EGObject) => {
     setState({ open: true, server: server, yaml: yaml.dump(server) })
   }
   const onClose = () => {
-    setState({ open: false, server: {} as httpserver.HTTPServer, yaml: "" })
+    setState({ open: false, server: {} as EGObject, yaml: "" })
   }
   const onChange = (value: string | undefined, ev: any) => {
     setState({ ...state, yaml: value || "" })

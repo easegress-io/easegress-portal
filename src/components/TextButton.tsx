@@ -22,8 +22,8 @@ export default function TextButton(props: TextButtonProps) {
         textTransform: 'none',
       }}
       color={color as any}
-      {...other}
       onClick={onClick}
+      {...other}
     >
       {title}
     </Button>
