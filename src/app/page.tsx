@@ -14,7 +14,7 @@ export default function Home() {
       router.push("/cluster")
     }, 500)
     return () => clearTimeout(timer)
-  }, [])
+  }, [router])
 
   return (
     <div>

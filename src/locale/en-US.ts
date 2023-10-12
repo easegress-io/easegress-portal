@@ -6,6 +6,7 @@ export const enUS = {
   'app.cluster.role': "Role",
   'app.cluster.start': "Start",
   'app.cluster.heartbeat': "Heartbeat",
+  'app.cluster.manage': "Manage Clusters",
 
   'app.controller': 'Controller',
 

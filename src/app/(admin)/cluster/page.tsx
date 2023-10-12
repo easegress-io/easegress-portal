@@ -3,26 +3,32 @@
 import React from "react"
 import { useIntl } from "react-intl"
 
-import { useClusters } from "../../context"
 import { ClusterType, MemberType } from "@/apis/cluster"
-import { isNullOrUndefined } from "@/common/utils"
 import clusterImage from '@/asserts/cluster.png'
+import heartbeatSVG from '@/asserts/heartbeat.svg'
 import nodeSVG from '@/asserts/node.svg'
 import roleSVG from '@/asserts/role.svg'
 import startSVG from '@/asserts/start.svg'
-import heartbeatSVG from '@/asserts/heartbeat.svg'
+import { isNullOrUndefined } from "@/common/utils"
+import { useClusters } from "../../context"
 
+import { useClusterMembers } from "@/apis/hooks"
+import ErrorAlert from "@/components/ErrorAlert"
+import YamlEditorDialog from "@/components/YamlEditorDialog"
+import { Avatar, Button, Card, CardContent, CardHeader, Chip, CircularProgress, Grid, Paper, Stack, } from "@mui/material"
 import yaml from 'js-yaml'
 import moment from 'moment'
 import Image from 'next/image'
 import { useRouter } from "next/navigation"
-import { Avatar, Card, CardContent, CardHeader, Chip, CircularProgress, Grid, Paper, Stack, Button, } from "@mui/material"
-import { useClusterMembers } from "@/apis/hooks"
-import ErrorAlert from "@/components/ErrorAlert"
-import YamlEditorDialog from "@/components/YamlEditorDialog"
 
 export default function Clusters() {
   const { clusters } = useClusters()
+  const intl = useIntl()
+  const [viewYaml, setViewYaml] = React.useState({
+    open: false,
+    yaml: "",
+  })
+
   return (
     <div>
       <Grid container spacing={2}>
@@ -32,6 +38,14 @@ export default function Clusters() {
           </Grid>
         ))}
       </Grid>
+      <YamlEditorDialog
+        open={viewYaml.open}
+        onClose={() => { setViewYaml({ open: false, yaml: "" }) }}
+        title={intl.formatMessage({ id: "app.cluster.manage" })}
+        yaml={viewYaml.yaml}
+        onYamlChange={() => { }}
+        editorOptions={{ readOnly: false }}
+      />
     </div>
   )
 }
@@ -39,7 +53,7 @@ export default function Clusters() {
 function SingleCluster({ cluster }: { cluster: ClusterType }) {
   const intl = useIntl()
   const router = useRouter()
-  const { setCurrentClusterID } = useClusters()
+  const { setCurrentClusterName } = useClusters()
   const { members, error, isLoading } = useClusterMembers(cluster, { refreshInterval: 10000 })
   const [errExpand, setErrExpand] = React.useState(false)
 
@@ -59,7 +73,7 @@ function SingleCluster({ cluster }: { cluster: ClusterType }) {
             }}
             onClick={() => {
               router.push(`/traffic/`);
-              setCurrentClusterID(cluster.id);
+              setCurrentClusterName(cluster.name);
             }}
           >
             {cluster.name}
@@ -82,15 +96,13 @@ function SingleCluster({ cluster }: { cluster: ClusterType }) {
             {`${intl.formatMessage({ id: 'app.cluster.apiAddress' })}:`}
           </span>
 
-          {cluster.apiAddresses.map((address) => (
-            <Chip
-              key={`${address}`}
-              size="small"
-              variant="outlined"
-              style={{ margin: '0 0 0 8px' }}
-              label={address}
-            />
-          ))}
+          <Chip
+            key={`${cluster.cluster.server}`}
+            size="small"
+            variant="outlined"
+            style={{ margin: '0 0 0 8px' }}
+            label={cluster.cluster.server}
+          />
         </div>
 
         {isLoading && <CircularProgress />}
@@ -99,7 +111,7 @@ function SingleCluster({ cluster }: { cluster: ClusterType }) {
           <ErrorAlert error={error} expand={errExpand} onClose={() => { setErrExpand(!errExpand) }} />
         )}
 
-        {/* useSWR may use same data state and switch when we change page. 
+        {/* useSWR may use same data state and switch when we change page.
         Anyway, members can be Objects for a short time when switch page */}
         {!isNullOrUndefined(members) && Array.isArray(members) &&
           <Grid container>

@@ -26,26 +26,27 @@ export default function RootLayout({ children, }: { children: React.ReactNode })
 
   // TODO: load clusters from file or local storage.
   const fakeCluster: ClusterType = {
-    id: 1,
     name: "port 2381",
-    apiAddresses: ["http://localhost:2381"],
+    cluster: {
+      server: "http://localhost:2381",
+    }
   }
 
   const [clusters, setClusters] = React.useState<ClusterType[]>([defaultCluster, fakeCluster])
-  const [currentClusterID, setCurrentClusterID] = React.useState<number>(defaultCluster.id)
+  const [currentClusterName, setCurrentClusterName] = React.useState<string>(defaultCluster.name)
   const clusterContext = {
     clusters,
     setClusters: (clusters: ClusterType[]) => {
       if (clusters.length === 0) {
         setClusters([defaultCluster])
-        setCurrentClusterID(defaultCluster.id)
+        setCurrentClusterName(defaultCluster.name)
         return
       }
       setClusters(clusters)
-      setCurrentClusterID(clusters[0].id)
+      setCurrentClusterName(clusters[0].name)
     },
-    currentClusterID,
-    setCurrentClusterID,
+    currentClusterName,
+    setCurrentClusterName,
   }
 
   return (

@@ -3,9 +3,11 @@ import { urls } from "./urls"
 import axios, { AxiosResponse, AxiosRequestConfig, AxiosInstance, Axios } from "axios"
 
 export type ClusterType = {
-  id: number
   name: string
-  apiAddresses: string[]
+  cluster: {
+    server: string
+    'certificate-authority-data'?: string // base64
+  }
 }
 
 export type MemberType = {
@@ -26,22 +28,16 @@ type ClientInfo = {
   config: AxiosRequestConfig
 }
 
-type EgctlConfig = {
+export type EgctlConfig = {
   kind: string
-  clusters: {
-    name: string
-    cluster: {
-      server: string
-      'certificate-authority-data': string // base64
-    }
-  }[]
+  clusters: ClusterType[]
   users: {
     name: string
     user: {
-      'client-certificate-data': string // base64
-      'client-key-data': string         // base64
-      username: string
-      password: string
+      'client-certificate-data'?: string // base64
+      'client-key-data'?: string         // base64
+      username?: string
+      password?: string
     }
   }[]
   contexts: {
@@ -99,12 +95,10 @@ function egctlConfigToAxiosInstance(config: EgctlConfig): AxiosInstance {
   return instance
 }
 
-
-
 export function getClientInfo(cluster: ClusterType, path: string): ClientInfo {
   // TODO: later may check protocol, and add auth, mtls to config
   return {
-    url: cluster.apiAddresses[0] + path,
+    url: cluster.cluster.server + path,
     config: {}
   }
 }

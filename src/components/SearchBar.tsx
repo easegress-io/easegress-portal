@@ -17,7 +17,7 @@ export type SearchBarProps = {
 }
 
 export default function SearchBar({ search, onSearchChange, buttons }: SearchBarProps) {
-  const { clusters, currentCluster, setCurrentClusterID } = useClusters()
+  const { clusters, currentCluster, setCurrentClusterName } = useClusters()
   const intl = useIntl()
 
   return (
@@ -60,7 +60,7 @@ export default function SearchBar({ search, onSearchChange, buttons }: SearchBar
                 )}
                 value={currentCluster}
                 onChange={(_, value) => {
-                  setCurrentClusterID(value.id)
+                  setCurrentClusterName(value.name)
                 }}
                 style={{ width: '300px' }}
                 disableClearable
