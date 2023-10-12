@@ -3,8 +3,8 @@
 import { useObjects } from "@/apis/hooks"
 import { useClusters } from "@/app/context"
 import React from "react"
-import { EGObject, deleteObject, getObjectStatus, grpcserver, httpserver, pipeline, updateObject } from "@/apis/object"
-import { Avatar, Box, ButtonBase, Chip, CircularProgress, Collapse, IconButton, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material"
+import { EGObject, deleteObject, getObjectStatus, pipeline, updateObject } from "@/apis/object"
+import { Avatar, Box, Button, ButtonBase, Chip, CircularProgress, Collapse, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material"
 import { useIntl } from "react-intl"
 import YamlEditorDialog from "@/components/YamlEditorDialog"
 import { useSnackbar } from "notistack"
@@ -19,6 +19,10 @@ import yaml from "js-yaml"
 import SimpleDialog from "@/components/SimpleDialog"
 import { useResourcesContext } from "../context"
 import { useDeleteResource, useEditResource } from "../hooks"
+import FlowChart from "./FlowChart"
+import { editor } from 'monaco-editor';
+import Close from "@mui/icons-material/Close"
+import { Editor } from "@monaco-editor/react"
 
 export default function Pipeline() {
   const intl = useIntl()
@@ -189,7 +193,7 @@ export default function Pipeline() {
         }]}
       />
       {/* edit */}
-      <YamlEditorDialog
+      {/* <YamlEditorDialog
         open={editPipeline.open}
         onClose={editPipeline.onClose}
         title={intl.formatMessage({ id: "app.general.actions.edit" })}
@@ -201,8 +205,106 @@ export default function Pipeline() {
             onClick: handleEditServer,
           }
         ]}
+      /> */}
+      <EditPipelineDialog
+        open={editPipeline.open}
+        onClose={editPipeline.onClose}
+        yaml={editPipeline.yaml}
+        onYamlChange={(value, ev) => { editPipeline.onChange(value, ev) }}
+        actions={[
+          {
+            label: intl.formatMessage({ id: "app.general.actions.edit" }),
+            onClick: handleEditServer,
+          }
+        ]}
       />
     </Paper >
+  )
+}
+
+export type EditPipelineDialogProps = {
+  open: boolean
+  onClose: () => void
+  yaml: string
+  onYamlChange: (value: string | undefined, ev: editor.IModelContentChangedEvent) => void
+  actions?: {
+    label: string
+    onClick: () => void
+    style?: { [key: string]: any }
+  }[]
+}
+
+function EditPipelineDialog(props: EditPipelineDialogProps) {
+  const intl = useIntl()
+  const { open, onClose, yaml, onYamlChange, actions } = props
+  const options = {
+    scrollBeyondLastLine: false,
+    fontSize: 14,
+  }
+  const getPipeline = () => {
+    const { result, err } = loadYaml(yaml)
+    if (err !== "") {
+      return undefined
+    }
+    return result as pipeline.Pipeline
+  }
+
+  return (
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="xl">
+      <DialogTitle sx={{ m: 0, p: 2 }}>
+        {intl.formatMessage({ id: "app.general.actions.view" })}
+      </DialogTitle>
+      <IconButton
+        aria-label="close"
+        onClick={onClose}
+        sx={{
+          position: 'absolute',
+          right: 8,
+          top: 8,
+          color: (theme) => theme.palette.grey[500],
+        }}
+      >
+        <Close />
+      </IconButton>
+
+      <DialogContent>
+        <Stack
+          direction="row"
+          justifyContent="center"
+          alignItems="flex-start"
+          spacing={2}
+        >
+          <Editor language="yaml" value={yaml} height={'80vh'} onChange={onYamlChange} options={options} />
+          <FlowChart pipeline={getPipeline()} />
+        </Stack>
+      </DialogContent>
+      {actions && actions.length > 0 &&
+        <DialogActions style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }} >
+          {actions.map((action, index) => {
+            return (
+              <Button
+                key={index}
+                variant="contained"
+                style={{
+                  textTransform: 'none',
+                  marginLeft: '8px',
+                  marginRight: '8px',
+                  minWidth: '150px',
+                  ...action.style
+                }}
+                onClick={action.onClick}
+              >
+                {action.label}
+              </Button>
+            )
+          })}
+        </DialogActions>
+      }
+    </Dialog>
   )
 }
 
@@ -263,12 +365,12 @@ function TrafficTableRow(props: TrafficTableRowProps) {
             >
               {pipeline.resilience.map((r, index) => {
                 return <div key={index}>
-                  {r.name}
+                  <TextButton title={r.name} onClick={() => { openViewYaml(yaml.dump(r)) }} />
                   <Chip sx={{ marginLeft: 1 }} size="small" label={r.kind} color="primary" variant="outlined" />
                 </div>
               })}
             </Stack> :
-            <Chip label={"None"} size="small" />
+            <ChipNone />
           }
         </TableCell>
 
@@ -326,7 +428,15 @@ function TrafficTableRow(props: TrafficTableRowProps) {
                 <Typography variant="h6" gutterBottom>
                   {intl.formatMessage({ id: "app.pipeline.flow" })}
                 </Typography>
-                <PipelineFilterTable pipeline={pipeline} onViewYaml={openViewYaml} />
+                <Stack
+                  direction="row"
+                  justifyContent="flex-start"
+                  alignItems="flex-start"
+                  spacing={2}
+                >
+                  <PipelineFilterTable pipeline={pipeline} onViewYaml={openViewYaml} />
+                  <FlowChart pipeline={pipeline} />
+                </Stack>
               </React.Fragment>
             </Box>
           </Collapse>
@@ -344,13 +454,27 @@ export type PipelineFilterTableProps = {
 export function PipelineFilterTable(props: PipelineFilterTableProps) {
   const intl = useIntl()
   const { pipeline, onViewYaml } = props
-  const flow = pipeline.flow || []
+  const getFlow = (pipeline: pipeline.Pipeline) => {
+    if (pipeline.flow && pipeline.flow.length > 0) {
+      return pipeline.flow
+    }
+    return pipeline.filters.map(f => {
+      return {
+        filter: f.name,
+        alias: "",
+        jumpIf: {},
+        namespace: "",
+      }
+    })
+  }
+  const flow = getFlow(pipeline)
 
   const tableHeads = [
     intl.formatMessage({ id: 'app.general.name' }),
     intl.formatMessage({ id: 'app.general.kind' }),
     intl.formatMessage({ id: 'app.pipeline.alias' }),
     intl.formatMessage({ id: 'app.pipeline.jumpIf' }),
+    intl.formatMessage({ id: 'app.general.actions' }),
   ]
 
   return (
@@ -365,36 +489,29 @@ export function PipelineFilterTable(props: PipelineFilterTableProps) {
         </TableRow>
       </TableHead>
       <TableBody>
-        {flow.length > 0 ?
-          <React.Fragment>
-            {flow.map((f, index) => {
-              const filter = pipeline.filters.find(filter => filter.name === f.filter)
-              let jumpIf = ""
-              _.map(f.jumpIf, (value, key) => {
-                jumpIf += `${key} -> ${value}\n`
-              })
-              return <TableRow key={index}>
-                <TableCell>{f.filter || "not found"}</TableCell>
-                <TableCell>{filter?.kind || "builtin"}</TableCell>
-                <TableCell>{f.alias || <Chip label={"None"} size="small" />}</TableCell>
-                <TableCell><pre>{jumpIf === "" ? <Chip label={"None"} size="small" /> : jumpIf}</pre></TableCell>
-              </TableRow>
-            })}
-          </React.Fragment> :
-          <React.Fragment>
-            {pipeline.filters.map((f, index) => {
-              return (
-                <TableRow key={index}>
-                  <TableCell>{f.name}</TableCell>
-                  <TableCell>{f.kind}</TableCell>
-                  <TableCell><Chip label={"None"} size="small" /></TableCell>
-                  <TableCell><Chip label={"None"} size="small" /></TableCell>
-                </TableRow>
-              )
-            })}
-          </React.Fragment>
-        }
+        <React.Fragment>
+          {flow.map((f, index) => {
+            const filter = pipeline.filters.find(filter => filter.name === f.filter)
+            let jumpIf = ""
+            _.map(f.jumpIf, (value, key) => {
+              jumpIf += `${key} -> ${value}\n`
+            })
+            return <TableRow key={index}>
+              <TableCell>{f.filter || "not found"}</TableCell>
+              <TableCell>{filter?.kind || "builtin"}</TableCell>
+              <TableCell>{f.alias || <ChipNone />}</TableCell>
+              <TableCell><pre>{jumpIf === "" ? <ChipNone /> : jumpIf}</pre></TableCell>
+              <TableCell>
+                <TextButton title={intl.formatMessage({ id: "app.general.actions.view" })} onClick={() => { onViewYaml(yaml.dump(filter) || "") }} />
+              </TableCell>
+            </TableRow>
+          })}
+        </React.Fragment>
       </TableBody>
     </Table >
   )
+}
+
+function ChipNone() {
+  return <Chip label={"None"} size="small" />
 }
