@@ -44,6 +44,8 @@ export const enUS = {
   'app.general.actions.yaml': 'YAML',
   'app.general.actions.status': 'Status',
   'app.general.actions.view': 'View',
+  'app.general.github': "GitHub repository",
+  'app.general.megaease': "Megaease website",
 
   'app.general.create': 'Create Resource',
   'app.general.createSuccess': 'Create {kind} {name} success',

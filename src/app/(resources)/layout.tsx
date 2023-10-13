@@ -91,6 +91,7 @@ function CreateDialog({ open, onClose, cluster, mutate }: CreateDialogProps) {
           mutate()
           onClose()
           enqueueSnackbar(intl.formatMessage({ id: 'app.general.createSuccess' }, { kind: egObject.kind, name: egObject.name }), { variant: 'success' })
+          setYamlDoc('')
         }).catch((err) => {
           enqueueSnackbar(intl.formatMessage({ id: 'app.general.createFailed' }, { kind: egObject.kind, name: egObject.name, error: catchErrorMessage(err) }), { variant: 'error' })
         })

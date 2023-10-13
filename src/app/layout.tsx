@@ -14,21 +14,33 @@ import AppBar from '@mui/material/AppBar';
 import CssBaseline from '@mui/material/CssBaseline';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
-import { ButtonBase, Tab, Tabs } from '@mui/material'
+import { ButtonBase, IconButton, Stack, Tab, Tabs, Tooltip } from '@mui/material'
 
 import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import FormatLineSpacingIcon from '@mui/icons-material/FormatLineSpacing';
 import BuildIcon from '@mui/icons-material/Build';
+import easegressSVG from '@/asserts/easegress.svg'
+import megaeaseICO from '@/asserts/megaease.ico'
+import GitHubIcon from '@mui/icons-material/GitHub';
+import Image from 'next/image'
+import { styled } from '@mui/material/styles';
+
+import { MaterialDesignContent } from 'notistack'
+
+const StyledMaterialDesignContent = styled(MaterialDesignContent)(() => ({
+  '&.notistack-MuiContent-error': {
+    backgroundColor: "#fdeded",
+    color: "#5f2120",
+  },
+}));
 
 export default function RootLayout({ children, }: { children: React.ReactNode }) {
-  const router = useRouter()
-
   // TODO: load clusters from file or local storage.
   const fakeCluster: ClusterType = {
-    name: "port 2381",
+    name: "12381",
     cluster: {
-      server: "http://localhost:2381",
+      server: "http://localhost:12381",
     }
   }
 
@@ -60,20 +72,15 @@ export default function RootLayout({ children, }: { children: React.ReactNode })
         >
           <Box sx={{ display: 'flex' }}>
             <CssBaseline />
-            <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
-              <Toolbar>
-                <ButtonBase onClick={() => { router.push('/') }}>
-                  <Typography variant="h6" noWrap component="div" >
-                    Easegress
-                  </Typography>
-                </ButtonBase>
-              </Toolbar>
-            </AppBar>
+            <TopAppBar />
             <SideBar />
             <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
               <Toolbar />
               <ClusterContext.Provider value={clusterContext}>
-                <SnackbarProvider maxSnack={3} autoHideDuration={5000}>
+                <SnackbarProvider Components={{
+                  success: StyledMaterialDesignContent,
+                  error: StyledMaterialDesignContent,
+                }} maxSnack={3} autoHideDuration={5000}>
                   <Box marginTop={1} marginLeft={2} marginRight={2}>
                     {children}
                   </Box>
@@ -94,6 +101,66 @@ function Header() {
       <meta name="description" content="Easegress Portal" />
     </head>
   )
+}
+
+function TopAppBar() {
+  const router = useRouter()
+  const intl = useIntl()
+
+  return (
+    <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
+      <Toolbar>
+        <Stack spacing={1} direction={"row"}>
+          <Image
+            src={easegressSVG}
+            alt={"easegress"}
+          />
+          <ButtonBase onClick={() => { router.push('/') }}>
+            <Typography variant="h6" noWrap component="div" >
+              Easegress
+            </Typography>
+          </ButtonBase>
+        </Stack>
+        <Typography flexGrow={1} />
+        <Stack
+          direction="row"
+          justifyContent="center"
+          alignItems="center"
+          spacing={1}
+        >
+          <Tooltip title={intl.formatMessage({ id: "app.general.github" })}>
+            <IconButton
+              style={{ background: "white", borderRadius: "10px", }}
+              size='small'
+              onClick={() => { window.open("https://github.com/megaease/easegress", "_blank") }}
+            >
+              <GitHubIcon
+                style={{
+                  width: '24px',
+                  height: '24px',
+                }}
+                color='primary'
+              />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title={intl.formatMessage({ id: "app.general.megaease" })}>
+            <IconButton
+              style={{ background: "white", borderRadius: "10px", }}
+              size="small"
+              onClick={() => { window.open("https://megaease.com", "_blank") }}
+            >
+              <Image
+                style={{
+                  width: '24px',
+                  height: '24px',
+                }}
+                src={megaeaseICO}
+                alt="megaease" />
+            </IconButton>
+          </Tooltip>
+        </Stack>
+      </Toolbar>
+    </AppBar>)
 }
 
 function SideBar() {
