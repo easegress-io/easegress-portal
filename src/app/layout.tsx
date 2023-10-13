@@ -77,10 +77,13 @@ export default function RootLayout({ children, }: { children: React.ReactNode })
             <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
               <Toolbar />
               <ClusterContext.Provider value={clusterContext}>
-                <SnackbarProvider Components={{
-                  success: StyledMaterialDesignContent,
-                  error: StyledMaterialDesignContent,
-                }} maxSnack={3} autoHideDuration={5000}>
+                <SnackbarProvider
+                  Components={{
+                    error: StyledMaterialDesignContent,
+                  }}
+                  maxSnack={3}
+                  autoHideDuration={5000}
+                >
                   <Box marginTop={1} marginLeft={2} marginRight={2}>
                     {children}
                   </Box>
