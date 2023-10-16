@@ -20,6 +20,7 @@ import yaml from 'js-yaml'
 import moment from 'moment'
 import Image from 'next/image'
 import { useRouter } from "next/navigation"
+import YamlViewer from "@/components/YamlViewer"
 
 export default function Clusters() {
   const { clusters } = useClusters()
@@ -223,15 +224,12 @@ function SingleClusterMember(props: SingleClusterMemberProps) {
           </Stack>
         </div>
       </Stack >
-      <YamlEditorDialog
+      <YamlViewer
         open={details}
         onClose={() => { setDetails(false) }}
         title={`${cluster.name} - ${member.options.Name}`}
         yaml={yamlDoc}
-        onYamlChange={() => { }}
-        editorOptions={{
-          readOnly: true,
-        }} />
+      />
     </Paper >
   )
 }

@@ -13,6 +13,7 @@ import { ClusterType } from '@/apis/cluster';
 import { getObjectsSWRKey } from '@/apis/hooks';
 import YamlEditorDialog from '@/components/YamlEditorDialog';
 import { ResourceContext } from './context';
+import YamlViewer from '@/components/YamlViewer';
 
 export default function Layout({ children, }: { children: React.ReactNode }) {
   const { currentCluster } = useClusters()
@@ -47,13 +48,10 @@ export default function Layout({ children, }: { children: React.ReactNode }) {
         {children}
       </ResourceContext.Provider>
       {/* view only */}
-      <YamlEditorDialog
+      <YamlViewer
         open={viewYaml.open}
         onClose={() => { setViewYaml({ open: false, yaml: "" }) }}
-        title={intl.formatMessage({ id: "app.general.actions.view" })}
         yaml={viewYaml.yaml}
-        onYamlChange={() => { }}
-        editorOptions={{ readOnly: true }}
       />
     </div>
   )

@@ -6,7 +6,6 @@ import React from "react"
 import { EGObject, deleteObject, getObjectStatus, pipeline, updateObject } from "@/apis/object"
 import { Avatar, Box, Button, ButtonBase, Chip, CircularProgress, Collapse, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material"
 import { useIntl } from "react-intl"
-import YamlEditorDialog from "@/components/YamlEditorDialog"
 import { useSnackbar } from "notistack"
 import { catchErrorMessage, loadYaml } from "@/common/utils"
 import BlankPage from "@/components/BlankPage"
@@ -193,19 +192,6 @@ export default function Pipeline() {
         }]}
       />
       {/* edit */}
-      {/* <YamlEditorDialog
-        open={editPipeline.open}
-        onClose={editPipeline.onClose}
-        title={intl.formatMessage({ id: "app.general.actions.edit" })}
-        yaml={editPipeline.yaml}
-        onYamlChange={(value, ev) => { editPipeline.onChange(value, ev) }}
-        actions={[
-          {
-            label: intl.formatMessage({ id: "app.general.actions.edit" }),
-            onClick: handleEditServer,
-          }
-        ]}
-      /> */}
       <EditPipelineDialog
         open={editPipeline.open}
         onClose={editPipeline.onClose}
