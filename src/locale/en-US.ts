@@ -8,6 +8,12 @@ export const enUS = {
   'app.cluster.heartbeat': "Heartbeat",
   'app.cluster.manage': "Manage Clusters",
 
+  'app.log': 'Log',
+  'app.log.limit': 'Log Limit',
+  'app.log.getLogFailed': "Get logs failed, error: {error}",
+  'app.log.getLogSuccess': "Get logs success",
+  'app.log.refresh': "Refresh",
+
   'app.controller': 'Controller',
 
   'app.pipeline': 'Pipeline',
@@ -46,6 +52,10 @@ export const enUS = {
   'app.general.actions.view': 'View',
   'app.general.github': "GitHub repository",
   'app.general.megaease': "Megaease website",
+
+  'app.general.page': 'Page',
+  'app.general.pageSize': 'Page Size',
+  'app.general.pageJump': 'Jump',
 
   'app.general.create': 'Create Resource',
   'app.general.createSuccess': 'Create {kind} {name} success',

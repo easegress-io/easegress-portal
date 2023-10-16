@@ -107,3 +107,8 @@ export async function getClusterMembers(cluster: ClusterType) {
   const info = getClientInfo(cluster, urls.Members)
   return await api.get<any, AxiosResponse<MemberType[]>>(info.url, info.config).then(res => res.data)
 }
+
+export async function getLogs(cluster: ClusterType, tail: number) {
+  const info = getClientInfo(cluster, urls.Logs(tail, false))
+  return await api.get<any, AxiosResponse<string>>(info.url, info.config).then(res => res.data)
+}

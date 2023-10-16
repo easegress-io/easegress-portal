@@ -25,6 +25,7 @@ import megaeaseICO from '@/asserts/megaease.ico'
 import GitHubIcon from '@mui/icons-material/GitHub';
 import Image from 'next/image'
 import { styled } from '@mui/material/styles';
+import DescriptionIcon from '@mui/icons-material/Description';
 
 import { MaterialDesignContent } from 'notistack'
 
@@ -177,6 +178,7 @@ function SideBar() {
     { name: intl.formatMessage({ id: 'app.traffic' }), url: '/traffic', icon: <FilterAltIcon /> },
     { name: intl.formatMessage({ id: 'app.pipeline' }), url: '/pipeline', icon: <FormatLineSpacingIcon /> },
     { name: intl.formatMessage({ id: 'app.controller' }), url: '/controller', icon: <BuildIcon style={{ transform: 'scaleX(-1)' }} /> },
+    { name: intl.formatMessage({ id: 'app.log' }), url: '/log', icon: <DescriptionIcon /> },
   ]
 
   const getCurrentTabValue = () => {

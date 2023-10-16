@@ -9,4 +9,6 @@ export namespace urls {
 
     export const StatusObjectsURL = apiURL + "/status/objects"
     export const StatusObjectItemURL = (id: string) => apiURL + `/status/objects/${id}`
+
+    export const Logs = (tail: number, follow: boolean) => apiURL + `/logs?tail=${tail}&follow=${follow}`
 }
