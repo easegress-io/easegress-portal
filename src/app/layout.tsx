@@ -1,7 +1,7 @@
 "use client"
 
 import React from 'react'
-import { ClusterType, parseEgctlConfig, EgctlConfig, defaultCluster, getCurrentClusterName, ValidateEgctlConfig } from '@/apis/cluster'
+import { ClusterType, parseEgctlConfig, EgctlConfig, defaultCluster, getCurrentClusterName, validateEgctlConfig } from '@/apis/cluster'
 import { translations } from '@/locale'
 import { ClusterContext } from './context'
 import { useSnackbar } from 'notistack';
@@ -27,6 +27,7 @@ import GitHubIcon from '@mui/icons-material/GitHub';
 import Image from 'next/image'
 import { styled } from '@mui/material/styles';
 import DescriptionIcon from '@mui/icons-material/Description';
+import { loadYaml } from '@/common/utils'
 
 import { MaterialDesignContent } from 'notistack'
 
@@ -36,67 +37,124 @@ const StyledMaterialDesignContent = styled(MaterialDesignContent)(() => ({
     color: "#5f2120",
   },
 }));
-import { json } from 'stream/consumers'
-import { loadYaml } from '@/common/utils'
-import axios, { Axios, AxiosInstance, AxiosRequestConfig } from 'axios'
-import { validateConfig } from 'next/dist/server/config-shared'
 
-const defaultEgctlConfig = `
-  kind: Config
+const defaultEgctlConfig = `kind: Config
 
-  # current used context.
-  current-context: context-default
+# current used context.
+current-context: context-default
 
-  # "contexts" section contains "user" and "cluster" information, which informs egctl about which "user" should be used to access a specific "cluster".
-  contexts:
-    - context:
-        cluster: cluster-default
-        user: user-default
-      name: context-default
+# "contexts" section contains "user" and "cluster" information, which informs egctl about which "user" should be used to access a specific "cluster".
+contexts:
+  - context:
+      cluster: cluster-default
+      user: user-default
+    name: context-default
 
-  # "clusters" section contains information about the "cluster".
-  # "server" specifies the host address that egctl should access.
-  # "certificate-authority-data" in base64 contain the root certificate authority that the client uses to verify server certificates.
-  clusters:
-    - cluster:
-        server: http://localhost:2381
-        certificate-authority-data: ""
-      name: cluster-default
+# "clusters" section contains information about the "cluster".
+# "server" specifies the host address that egctl should access.
+# "certificate-authority-data" in base64 contain the root certificate authority that the client uses to verify server certificates.
+clusters:
+  - cluster:
+      server: http://localhost:2381
+      certificate-authority-data: ""
+    name: cluster-default
 
-  # "users" section contains "user" information.
-  # "username" and "password" are used for basic authentication.
-  # the pair ("client-key-data", "client-certificate-data") in base64 contains the client certificate.
-  users:
-    - name: user-default
-      user:
-        username: ""
-        password: ""
-        client-certificate-data: ""
-        client-key-data: ""
+# "users" section contains "user" information.
+# "username" and "password" are used for basic authentication.
+# the pair ("client-key-data", "client-certificate-data") in base64 contains the client certificate.
+users:
+  - name: user-default
+    user:
+      username: ""
+      password: ""
+      client-certificate-data: ""
+      client-key-data: ""
 `
 
 export default function RootLayout({ children, }: { children: React.ReactNode }) {
-  let value = localStorage.getItem('easegress-rc-file')
-  if (value === null || value === "") {
-    value = defaultEgctlConfig
-    localStorage.setItem('easegress-rc-file', value)
+  return (
+    <html>
+      <Header />
+      <body>
+        <IntlProvider
+          key={'en-US'}
+          locale={'en-US'}
+          messages={translations['en-US']}
+        >
+          <Box sx={{
+            display: 'flex',
+          }}>
+            <CssBaseline />
+            <TopAppBar />
+            <SideBar />
+            <Box component="main" sx={{
+              minHeight: "calc(100vh - 30px)",
+              flexGrow: 1,
+              p: 3,
+              display: 'flex',
+              flexDirection: 'column',
+            }}>
+              <Toolbar />
+              <SnackbarProvider
+                Components={{
+                  error: StyledMaterialDesignContent,
+                }}
+                maxSnack={3}
+                autoHideDuration={5000}
+              >
+                <ClusterContextProvider>
+                  {children}
+                </ClusterContextProvider>
+              </SnackbarProvider>
+            </Box>
+          </Box>
+          <Footer />
+        </IntlProvider>
+      </body>
+    </html >
+  )
+}
+
+function ClusterContextProvider({ children }: { children: React.ReactNode }) {
+  const intl = useIntl()
+  const { enqueueSnackbar } = useSnackbar()
+
+  const defaultConfig = parseEgctlConfig(loadYaml(defaultEgctlConfig).result)
+
+  const [clusters, setClusters] = React.useState<ClusterType[]>([defaultCluster])
+  const [currentClusterName, setCurrentClusterName] = React.useState<string>(defaultCluster.name)
+  const setConfig = (config: EgctlConfig) => {
+    setClusters(config.clusters)
+    setCurrentClusterName(getCurrentClusterName(config) || config.clusters[0].name)
   }
 
-  let { result, err: yamlErr } = loadYaml(value)
-  let validateErr = ValidateEgctlConfig(result)
-  if (yamlErr !== "" || validateErr !== "") {
-    console.log("load and validate local storage egctl config failed: ", yamlErr, validateErr)
-    console.log("restore default egctl config")
-    value = defaultEgctlConfig
-    localStorage.setItem('easegress-rc-file', defaultEgctlConfig)
-  }
+  React.useEffect(() => {
+    let rcFile = localStorage.getItem('easegress-rc-file')
+    if (rcFile === null || rcFile === "") {
+      localStorage.setItem('easegress-rc-file', defaultEgctlConfig)
+      setConfig(defaultConfig)
+      return
+    }
 
-  let { result: egctlConfig } = loadYaml(value)
+    let { result, err: yamlErr } = loadYaml(rcFile)
+    if (yamlErr !== "") {
+      enqueueSnackbar(intl.formatMessage({ id: 'app.general.invalidRCFile' }, { error: yamlErr }), { variant: 'error' })
+      localStorage.setItem('easegress-rc-file', defaultEgctlConfig)
+      setConfig(defaultConfig)
+      return
+    }
 
-  let parsedEgctlConfig: EgctlConfig = parseEgctlConfig(egctlConfig)
+    const validateErr = validateEgctlConfig(result)
+    if (validateErr !== "") {
+      enqueueSnackbar(intl.formatMessage({ id: 'app.general.invalidRCFile' }, { error: yamlErr }), { variant: 'error' })
+      localStorage.setItem('easegress-rc-file', defaultEgctlConfig)
+      setConfig(defaultConfig)
+      return
+    }
 
-  const [clusters, setClusters] = React.useState<ClusterType[]>(parsedEgctlConfig.clusters)
-  const [currentClusterName, setCurrentClusterName] = React.useState<string>(getCurrentClusterName(parsedEgctlConfig))
+    const egctlConfig = parseEgctlConfig(result)
+    setConfig(egctlConfig)
+  }, [])
 
   const clusterContext = {
     clusters,
@@ -114,38 +172,11 @@ export default function RootLayout({ children, }: { children: React.ReactNode })
   }
 
   return (
-    <html>
-      <Header />
-      <body>
-        <IntlProvider
-          key={'en-US'}
-          locale={'en-US'}
-          messages={translations['en-US']}
-        >
-          <Box sx={{ display: 'flex' }}>
-            <CssBaseline />
-            <TopAppBar />
-            <SideBar />
-            <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
-              <Toolbar />
-              <ClusterContext.Provider value={clusterContext}>
-                <SnackbarProvider
-                  Components={{
-                    error: StyledMaterialDesignContent,
-                  }}
-                  maxSnack={3}
-                  autoHideDuration={5000}
-                >
-                  <Box marginTop={1} marginLeft={2} marginRight={2}>
-                    {children}
-                  </Box>
-                </SnackbarProvider>
-              </ClusterContext.Provider>
-            </Box>
-          </Box>
-        </IntlProvider>
-      </body>
-    </html >
+    <ClusterContext.Provider value={clusterContext}>
+      <Box marginTop={1} marginLeft={2} marginRight={2}>
+        {children}
+      </Box>
+    </ClusterContext.Provider>
   )
 }
 
@@ -270,5 +301,35 @@ function SideBar() {
         </Tabs>
       </Box>
     </Drawer >
+  )
+}
+
+function Footer() {
+  return (
+    <Stack
+      direction="row"
+      justifyContent="center"
+      alignItems="center"
+      spacing={0}
+      sx={{
+        marginTop: 'auto',
+      }}
+    >
+      <IconButton
+        size="small"
+        onClick={() => { window.open("https://megaease.com", "_blank") }}
+      >
+        <Image
+          style={{
+            width: '24px',
+            height: '24px',
+          }}
+          src={megaeaseICO}
+          alt="megaease" />
+      </IconButton>
+      <Typography variant="body2" color="text.secondary" align="center">
+        {`© ${new Date().getFullYear()} Megaease, Inc.`}
+      </Typography>
+    </Stack>
   )
 }

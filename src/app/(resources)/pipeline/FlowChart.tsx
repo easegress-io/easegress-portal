@@ -50,7 +50,6 @@ export default function FlowChart({ pipeline }: FlowChartProps) {
           }
         });
       });
-    console.log(mermaidText)
     setChart(mermaidText);
   }, [pipeline, setChart]);
 

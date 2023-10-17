@@ -8,6 +8,7 @@ export const enUS = {
   'app.cluster.heartbeat': "Heartbeat",
   'app.cluster.manage': "Manage Clusters",
   'app.cluster.save': "Save",
+  'app.cluster.invalidRCFile': "Invalid egctlrc file, error: {error}",
 
   'app.log': 'Log',
   'app.log.limit': 'Log Limit',

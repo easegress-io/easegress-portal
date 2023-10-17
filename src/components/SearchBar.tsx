@@ -29,7 +29,7 @@ export default function SearchBar({ search, onSearchChange, buttons }: SearchBar
 }
 
 export type SearchBarLayoutProps = {
-  contents: React.ReactNode[]
+  contents?: React.ReactNode[]
   buttons?: {
     icon?: React.ReactNode
     label: string
@@ -59,7 +59,7 @@ export function SearchBarLayout(props: SearchBarLayoutProps) {
                 alignItems: 'center',
               }}
             >
-              {contents.map((content, index) => {
+              {contents && contents.map((content, index) => {
                 return (
                   <Fragment key={index}>
                     {content}

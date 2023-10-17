@@ -1,7 +1,6 @@
-import React from 'react'
 import api from "./api"
 import { urls } from "./urls"
-import axios, { AxiosResponse, AxiosRequestConfig, AxiosInstance, Axios } from "axios"
+import { AxiosResponse, AxiosRequestConfig } from "axios"
 
 export const defaultCluster: ClusterType = {
   name: "localhost",
@@ -23,8 +22,7 @@ export type ClusterType = {
     server: string
     'certificate-authority-data'?: string // base64
   }
-
-  axiosInstance?: AxiosInstance
+  axiosConfig?: AxiosRequestConfig
 }
 
 export type MemberType = {
@@ -72,7 +70,7 @@ export function getCurrentClusterName(config: EgctlConfig) {
   return config.contexts.find(ctx => ctx.name === config['current-context'])?.context?.cluster || ""
 }
 
-export function ValidateEgctlConfig(config: EgctlConfig): string {
+export function validateEgctlConfig(config: EgctlConfig): string {
   if (config.clusters?.length === 0) {
     return "No cluster found in config"
   }
@@ -92,17 +90,17 @@ export function ValidateEgctlConfig(config: EgctlConfig): string {
   let currentContext = config.contexts.find(ctx => ctx.name === config['current-context'])
 
   if (currentContext === undefined) {
-    return "current-context ${config['current-context']} not found in contexts"
+    return `current-context ${config['current-context']} not found in contexts`
   }
 
   let currentCluster = config.clusters.find(cluster => cluster.name === currentContext?.context?.cluster)
   if (currentCluster === undefined) {
-    return "cluster ${current-context?.context?.cluster} not found in clusters"
+    return `cluster ${currentContext?.context?.cluster} not found in clusters`
   }
 
   let currentUser = config.users.find(user => user.name === currentContext?.context?.user)
   if (currentUser === undefined) {
-    return "user ${current-context?.context?.user} not found in users"
+    return `user ${currentContext?.context?.user} not found in users`
   }
 
   let enableMTLS = false
@@ -113,37 +111,31 @@ export function ValidateEgctlConfig(config: EgctlConfig): string {
   if (enableMTLS) {
     if (currentUser.user?.['client-certificate-data'] === undefined ||
       currentUser.user?.['client-key-data'] === undefined) {
-      return "user ${currentUser.name} client-certificate-data or client-key-data not found in user"
+      return `user ${currentUser.name} client-certificate-data or client-key-data not found in users`
     }
   }
-
   return ""
 }
 
-
 export function parseEgctlConfig(config: EgctlConfig): EgctlConfig {
-  const axiosConfig: AxiosRequestConfig = {
-    headers: {
-      'Accept': 'application/json',
-    },
-    responseType: 'json'
-  };
-
-  console.log("config: ", config)
-  console.log("clusters: ", config.clusters)
   config.clusters.forEach((cluster) => {
+    const axiosConfig: AxiosRequestConfig = {
+      headers: { 'Accept': 'application/json' },
+      responseType: 'json'
+    }
+
     let enableMTLS = false
     if (cluster?.cluster["certificate-authority-data"] !== "") {
       enableMTLS = true
     }
-
-    var url = cluster?.cluster.server
+    let url = cluster?.cluster.server
     if (enableMTLS) {
-      url = "https://" + url
+      url = url.replace("http://", "https://")
     }
     axiosConfig.url = url
 
-    let user = config.users.find(user => user.name === config.contexts.find(ctx => ctx.name === config['current-context'])?.context?.user)
+    let context = config.contexts.find(ctx => ctx.context.cluster === cluster.name)
+    let user = config.users.find(user => user.name === context?.context?.user)
 
     if (enableMTLS) {
       axiosConfig.httpsAgent = new (require('https').Agent)({
@@ -160,18 +152,19 @@ export function parseEgctlConfig(config: EgctlConfig): EgctlConfig {
         password: user?.user?.password || '',
       }
     }
-
-    cluster.axiosInstance = axios.create(axiosConfig)
+    cluster.axiosConfig = axiosConfig
   })
-
   return config
 }
 
 export function getClientInfo(cluster: ClusterType, path: string): ClientInfo {
-  // TODO: later may check protocol, and add auth, mtls to config
+  let url = cluster.cluster.server
+  if (cluster.axiosConfig?.url) {
+    url = cluster.axiosConfig?.url
+  }
   return {
-    url: cluster.cluster.server + path,
-    config: {}
+    url: url + path,
+    config: cluster.axiosConfig || {},
   }
 }
 
