@@ -39,6 +39,7 @@ export function useDeleteResource() {
     setState({ open: false, resource: {} as EGObject })
   }
   return {
+    state, setState,
     open: state.open,
     resource: state.resource,
     onOpen,

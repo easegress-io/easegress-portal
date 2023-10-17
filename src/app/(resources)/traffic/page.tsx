@@ -3,7 +3,7 @@
 import { useObjects } from "@/apis/hooks"
 import { useClusters } from "@/app/context"
 import React from "react"
-import { EGObject, deleteObject, getObjectStatus, grpcserver, httpserver, pipeline, updateObject } from "@/apis/object"
+import { EGObject, getObjectStatus, grpcserver, httpserver, pipeline, updateObject } from "@/apis/object"
 import { Box, ButtonBase, Chip, CircularProgress, Collapse, IconButton, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material"
 import { useIntl } from "react-intl"
 import YamlEditorDialog from "@/components/YamlEditorDialog"
@@ -16,17 +16,16 @@ import TextButton from "@/components/TextButton"
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import yaml from "js-yaml"
-import SimpleDialog from "@/components/SimpleDialog"
 import { useResourcesContext } from "../context"
 import { TableData } from "./types"
 import { HTTPServerRuleTable, getHTTPTableData } from "./http"
 import { GRPCServerRuleTable, getGRPCTableData } from "./grpc"
-import { useDeleteResource, useEditResource } from "../hooks"
+import { useEditResource } from "../hooks"
 
 export default function Traffic() {
   const intl = useIntl()
   const { currentCluster } = useClusters()
-  const { search, openViewYaml } = useResourcesContext()
+  const { search, openViewYaml, openDeleteResource } = useResourcesContext()
   const { objects, error, isLoading, mutate } = useObjects(currentCluster)
   const { enqueueSnackbar } = useSnackbar()
 
@@ -57,18 +56,6 @@ export default function Traffic() {
   }
   const setExpandValue = (server: EGObject, value: boolean) => {
     setExpandValues({ ...expandValues, [server.name]: value })
-  }
-
-  const deleteServer = useDeleteResource()
-  const confirmDeleteServer = () => {
-    const resource = deleteServer.resource
-    deleteServer.onClose()
-    deleteObject(currentCluster, resource.name).then(() => {
-      mutate()
-      enqueueSnackbar(intl.formatMessage({ id: "app.general.deleteSuccess" }, { kind: resource.kind, name: resource.name }), { variant: 'success' })
-    }).catch(err => {
-      enqueueSnackbar(intl.formatMessage({ id: "app.general.deleteFailed" }, { kind: resource.kind, name: resource.name, error: catchErrorMessage(err) }), { variant: 'error' })
-    })
   }
 
   const editServer = useEditResource()
@@ -140,7 +127,8 @@ export default function Traffic() {
       // delete
       label: intl.formatMessage({ id: "app.general.actions.delete" }),
       onClick: (server: EGObject) => {
-        deleteServer.onOpen(server)
+        // deleteServer.onOpen(server)
+        openDeleteResource(server)
       },
       color: "error",
     },
@@ -174,19 +162,6 @@ export default function Traffic() {
           </TableBody>
         </Table>
       </TableContainer>
-      {/* delete */}
-      <SimpleDialog
-        open={deleteServer.open}
-        onClose={deleteServer.onClose}
-        title={intl.formatMessage({ id: "app.general.deleteConfirm" })}
-        actions={[{
-          label: intl.formatMessage({ id: "app.general.actions.delete" }),
-          onClick: confirmDeleteServer,
-          style: {
-            color: "error",
-          }
-        }]}
-      />
       {/* edit */}
       <YamlEditorDialog
         open={editServer.open}

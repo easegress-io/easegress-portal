@@ -3,7 +3,7 @@
 import { useObjects } from "@/apis/hooks"
 import { useClusters } from "@/app/context"
 import React from "react"
-import { EGObject, deleteObject, getObjectStatus, updateObject } from "@/apis/object"
+import { EGObject, getObjectStatus, updateObject } from "@/apis/object"
 import { Box, Chip, CircularProgress, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material"
 import { useIntl } from "react-intl"
 import YamlEditorDialog from "@/components/YamlEditorDialog"
@@ -14,31 +14,18 @@ import ErrorAlert from "@/components/ErrorAlert"
 import _ from 'lodash'
 import TextButton from "@/components/TextButton"
 import yaml from "js-yaml"
-import SimpleDialog from "@/components/SimpleDialog"
 import { useResourcesContext } from "../context"
-import { useDeleteResource, useEditResource } from "../hooks"
+import { useEditResource } from "../hooks"
 
 export default function Controller() {
   const { currentCluster } = useClusters()
-  const { search, openViewYaml } = useResourcesContext()
+  const { search, openViewYaml, openDeleteResource } = useResourcesContext()
   const { objects, error, isLoading, mutate } = useObjects(currentCluster)
   const intl = useIntl()
   const { enqueueSnackbar } = useSnackbar()
   const controllers = objects?.others.filter(o => {
     return o.name.includes(search)
   }) || []
-
-  const deleteController = useDeleteResource()
-  const confirmDeleteController = () => {
-    const s = deleteController.resource
-    deleteController.onClose()
-    deleteObject(currentCluster, s.name).then(() => {
-      mutate()
-      enqueueSnackbar(intl.formatMessage({ id: "app.general.deleteSuccess" }, { kind: s.kind, name: s.name }), { variant: 'success' })
-    }).catch(err => {
-      enqueueSnackbar(intl.formatMessage({ id: "app.general.deleteFailed" }, { kind: s.kind, name: s.name, error: catchErrorMessage(err) }), { variant: 'error' })
-    })
-  }
 
   const editController = useEditResource()
   const handleEditController = () => {
@@ -109,7 +96,7 @@ export default function Controller() {
       // delete
       label: intl.formatMessage({ id: "app.general.actions.delete" }),
       onClick: (controller: EGObject) => {
-        deleteController.onOpen(controller)
+        openDeleteResource(controller)
       },
       color: "error",
     },
@@ -135,19 +122,6 @@ export default function Controller() {
           </TableBody>
         </Table>
       </TableContainer>
-      {/* delete */}
-      <SimpleDialog
-        open={deleteController.open}
-        onClose={deleteController.onClose}
-        title={intl.formatMessage({ id: "app.general.deleteConfirm" })}
-        actions={[{
-          label: intl.formatMessage({ id: "app.general.actions.delete" }),
-          onClick: confirmDeleteController,
-          style: {
-            color: "error",
-          }
-        }]}
-      />
       {/* edit */}
       <YamlEditorDialog
         open={editController.open}

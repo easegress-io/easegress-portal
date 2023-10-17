@@ -3,7 +3,7 @@
 import { useObjects } from "@/apis/hooks"
 import { useClusters } from "@/app/context"
 import React from "react"
-import { EGObject, deleteObject, getObjectStatus, pipeline, updateObject } from "@/apis/object"
+import { EGObject, getObjectStatus, pipeline, updateObject } from "@/apis/object"
 import { Avatar, Box, Button, ButtonBase, Chip, CircularProgress, Collapse, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material"
 import { useIntl } from "react-intl"
 import { useSnackbar } from "notistack"
@@ -15,9 +15,8 @@ import TextButton from "@/components/TextButton"
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import yaml from "js-yaml"
-import SimpleDialog from "@/components/SimpleDialog"
 import { useResourcesContext } from "../context"
-import { useDeleteResource, useEditResource } from "../hooks"
+import { useEditResource } from "../hooks"
 import FlowChart from "./FlowChart"
 import { editor } from 'monaco-editor';
 import Close from "@mui/icons-material/Close"
@@ -26,7 +25,7 @@ import { Editor } from "@monaco-editor/react"
 export default function Pipeline() {
   const intl = useIntl()
   const { currentCluster } = useClusters()
-  const { search, openViewYaml } = useResourcesContext()
+  const { search, openViewYaml, openDeleteResource } = useResourcesContext()
   const { objects, error, isLoading, mutate } = useObjects(currentCluster)
   const { enqueueSnackbar } = useSnackbar()
 
@@ -66,18 +65,6 @@ export default function Pipeline() {
   }
   const setExpandValue = (server: EGObject, value: boolean) => {
     setExpandValues({ ...expandValues, [server.name]: value })
-  }
-
-  const deletePipeline = useDeleteResource()
-  const confirmDeletePipeline = () => {
-    const resource = deletePipeline.resource
-    deletePipeline.onClose()
-    deleteObject(currentCluster, resource.name).then(() => {
-      mutate()
-      enqueueSnackbar(intl.formatMessage({ id: "app.general.deleteSuccess" }, { kind: resource.kind, name: resource.name }), { variant: 'success' })
-    }).catch(err => {
-      enqueueSnackbar(intl.formatMessage({ id: "app.general.deleteFailed" }, { kind: resource.kind, name: resource.name, error: catchErrorMessage(err) }), { variant: 'error' })
-    })
   }
 
   const editPipeline = useEditResource()
@@ -148,8 +135,9 @@ export default function Pipeline() {
     {
       // delete
       label: intl.formatMessage({ id: "app.general.actions.delete" }),
-      onClick: (server: EGObject) => {
-        deletePipeline.onOpen(server)
+      onClick: (pipeline: EGObject) => {
+        // deletePipeline.onOpen(server)
+        openDeleteResource(pipeline)
       },
       color: "error",
     },
@@ -178,19 +166,6 @@ export default function Pipeline() {
           </TableBody>
         </Table>
       </TableContainer>
-      {/* delete */}
-      <SimpleDialog
-        open={deletePipeline.open}
-        onClose={deletePipeline.onClose}
-        title={intl.formatMessage({ id: "app.general.deleteConfirm" })}
-        actions={[{
-          label: intl.formatMessage({ id: "app.general.actions.delete" }),
-          onClick: confirmDeletePipeline,
-          style: {
-            color: "error",
-          }
-        }]}
-      />
       {/* edit */}
       <EditPipelineDialog
         open={editPipeline.open}

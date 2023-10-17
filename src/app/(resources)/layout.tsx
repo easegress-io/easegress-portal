@@ -3,7 +3,7 @@
 import { mutate } from 'swr';
 import { useClusters } from "../context"
 import SearchBar from '@/components/SearchBar';
-import { createObject } from '@/apis/object';
+import { createObject, deleteObject } from '@/apis/object';
 import { useIntl } from 'react-intl';
 import React from 'react';
 import { useSnackbar } from 'notistack';
@@ -14,16 +14,30 @@ import { getObjectsSWRKey } from '@/apis/hooks';
 import YamlEditorDialog from '@/components/YamlEditorDialog';
 import { ResourceContext } from './context';
 import YamlViewer from '@/components/YamlViewer';
+import { useDeleteResource } from './hooks';
+import SimpleDialog from '@/components/SimpleDialog';
 
 export default function Layout({ children, }: { children: React.ReactNode }) {
-  const { currentCluster } = useClusters()
   const intl = useIntl()
+  const { enqueueSnackbar } = useSnackbar()
+  const { currentCluster } = useClusters()
   const [search, setSearch] = React.useState("")
   const [createOpen, setCreateOpen] = React.useState(false)
   const [viewYaml, setViewYaml] = React.useState({
     open: false,
     yaml: "",
   })
+  const deleteResource = useDeleteResource()
+  const confirmDeleteResource = () => {
+    const r = deleteResource.resource
+    deleteResource.onClose()
+    deleteObject(currentCluster, r.name).then(() => {
+      mutate(getObjectsSWRKey(currentCluster))
+      enqueueSnackbar(intl.formatMessage({ id: "app.general.deleteSuccess" }, { kind: r.kind, name: r.name }), { variant: 'success' })
+    }).catch(err => {
+      enqueueSnackbar(intl.formatMessage({ id: "app.general.deleteFailed" }, { kind: r.kind, name: r.name, error: catchErrorMessage(err) }), { variant: 'error' })
+    })
+  }
 
   const searchBarButtons = [
     {
@@ -43,7 +57,7 @@ export default function Layout({ children, }: { children: React.ReactNode }) {
         mutate={() => { mutate(getObjectsSWRKey(currentCluster)) }}
       />
       <ResourceContext.Provider value={{
-        search, setSearch, viewYaml, setViewYaml
+        search, setSearch, viewYaml, setViewYaml, deleteResource: deleteResource.state, setDeleteResource: deleteResource.setState,
       }}>
         {children}
       </ResourceContext.Provider>
@@ -52,6 +66,18 @@ export default function Layout({ children, }: { children: React.ReactNode }) {
         open={viewYaml.open}
         onClose={() => { setViewYaml({ open: false, yaml: "" }) }}
         yaml={viewYaml.yaml}
+      />
+      <SimpleDialog
+        open={deleteResource.open}
+        onClose={deleteResource.onClose}
+        title={intl.formatMessage({ id: "app.general.deleteConfirm" })}
+        actions={[{
+          label: intl.formatMessage({ id: "app.general.actions.delete" }),
+          onClick: confirmDeleteResource,
+          style: {
+            color: "error",
+          }
+        }]}
       />
     </div>
   )

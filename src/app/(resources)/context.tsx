@@ -1,3 +1,4 @@
+import { EGObject } from "@/apis/object"
 import React from "react"
 
 type ResourceContext = {
@@ -8,6 +9,11 @@ type ResourceContext = {
         yaml: string
     }
     setViewYaml: ({ open, yaml }: { open: boolean, yaml: string }) => void
+    deleteResource: {
+        open: boolean
+        resource: EGObject
+    }
+    setDeleteResource: ({ open, resource }: { open: boolean, resource: EGObject }) => void
 }
 
 export const ResourceContext = React.createContext<ResourceContext>({
@@ -18,16 +24,25 @@ export const ResourceContext = React.createContext<ResourceContext>({
         yaml: "",
     },
     setViewYaml: () => { },
+    deleteResource: {
+        open: false,
+        resource: {} as EGObject,
+    },
+    setDeleteResource: () => { },
 })
 
 export const useResourcesContext = () => {
-    const { search, setSearch, setViewYaml } = React.useContext(ResourceContext)
+    const { search, setSearch, setViewYaml, setDeleteResource } = React.useContext(ResourceContext)
     const openViewYaml = (yaml: string) => {
         setViewYaml({ open: true, yaml })
+    }
+    const openDeleteResource = (resource: EGObject) => {
+        setDeleteResource({ open: true, resource })
     }
     return {
         search,
         setSearch,
         openViewYaml,
+        openDeleteResource,
     }
 }
