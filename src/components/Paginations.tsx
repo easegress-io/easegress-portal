@@ -2,7 +2,6 @@ import { Box, Button, MenuItem, Pagination, Stack, TextField } from "@mui/materi
 import React from "react"
 import { useIntl } from "react-intl"
 
-
 export type PaginationsProps = {
   pageCount: number
   page: number
@@ -74,4 +73,22 @@ export default function Paginations(props: PaginationsProps) {
       }
     </Stack>
   )
+}
+
+export function usePagination(length: number, initPageSize: number) {
+  const [page, setPage] = React.useState(1)
+  const [pageSize, setPageSize] = React.useState(initPageSize)
+  const pageCount = Math.ceil(length / pageSize)
+
+  React.useEffect(() => {
+    setPage(1)
+  }, [length, pageSize])
+
+  return {
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+    pageCount,
+  }
 }

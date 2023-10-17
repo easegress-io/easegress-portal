@@ -1,71 +1,24 @@
 "use client"
 
-import React from "react"
+import React, { Fragment } from "react"
 import { useIntl } from "react-intl"
 
-import { ClusterType, MemberType, getLogs } from "@/apis/cluster"
-import clusterImage from '@/asserts/cluster.png'
-import heartbeatSVG from '@/asserts/heartbeat.svg'
-import nodeSVG from '@/asserts/node.svg'
-import roleSVG from '@/asserts/role.svg'
-import startSVG from '@/asserts/start.svg'
-import { catchErrorMessage, isNullOrUndefined } from "@/common/utils"
+import { isNullOrUndefined } from "@/common/utils"
 import { useClusters } from "../../context"
 
-import { useClusterMembers } from "@/apis/hooks"
-import ErrorAlert from "@/components/ErrorAlert"
-import YamlEditorDialog from "@/components/YamlEditorDialog"
-import { Avatar, Button, Card, CardContent, CardHeader, Chip, CircularProgress, Grid, List, ListItem, ListItemText, Pagination, Paper, Stack, Typography, } from "@mui/material"
-import yaml from 'js-yaml'
-import moment from 'moment'
-import Image from 'next/image'
-import { useRouter } from "next/navigation"
-import YamlViewer from "@/components/YamlViewer"
+import { Box, CircularProgress, List, ListItem, ListItemText, Typography, } from "@mui/material"
 import { SearchBarLayout, SearchText, SelectText, SwitchCluster } from "@/components/SearchBar"
-import { useSnackbar } from "notistack"
-import LoopIcon from '@mui/icons-material/Loop';
-import Paginations from "@/components/Paginations"
+import Paginations, { usePagination } from "@/components/Paginations"
+import { useLogs } from "@/apis/hooks"
+import ErrorAlert from "@/components/ErrorAlert"
+import BlankPage from "@/components/BlankPage"
 
 export default function Logs() {
   const intl = useIntl()
   const { currentCluster } = useClusters()
-  const { enqueueSnackbar } = useSnackbar()
   const [search, setSearch] = React.useState("")
-
   const [tail, setTail] = React.useState(logLimitOptions[0].value)
-  const [logs, setLogs] = React.useState([] as string[])
-  const filteredLogs = search === "" ? logs : logs.filter(l => l.includes(search))
-
-  const [page, setPage] = React.useState(1)
-  const [pageSize, setPageSize] = React.useState(50)
-  const pageCount = Math.ceil(filteredLogs.length / pageSize)
-  const [refresh, setRefresh] = React.useState(false)
-
-  const getCurrentLogs = () => {
-    let start = filteredLogs.length - page * pageSize
-    if (start < 0) {
-      start = 0
-    }
-    return filteredLogs.slice(start, start + pageSize).reverse()
-  }
-
-  const doRefresh = () => {
-    setRefresh(!refresh)
-  }
-
-  React.useEffect(() => {
-    setPage(1)
-    getLogs(currentCluster, tail).then(res => {
-      setLogs(res.split("\n"))
-      enqueueSnackbar(intl.formatMessage({ id: "app.log.getLogSuccess" }), { variant: 'success' })
-    }).catch(err => {
-      enqueueSnackbar(intl.formatMessage({ id: "app.log.getLogFailed" }, { error: catchErrorMessage(err) }), { variant: 'error' })
-    })
-  }, [tail, refresh])
-
-  React.useEffect(() => {
-    setPage(1)
-  }, [pageCount])
+  const { logs, error, isLoading, mutate } = useLogs(currentCluster, tail)
 
   return (
     <div>
@@ -86,14 +39,60 @@ export default function Logs() {
         buttons={[
           {
             label: intl.formatMessage({ id: "app.log.refresh" }),
-            onClick: () => { doRefresh() },
+            onClick: () => { mutate() },
           },
         ]}
       />
+      <LogContent logs={logs || ""} search={search} isLoading={isLoading} error={error} />
+    </div>
+  )
+}
+
+type LogContentProps = {
+  logs: string
+  isLoading: boolean
+  error: any
+  search: string
+}
+
+function LogContent(props: LogContentProps) {
+  const intl = useIntl()
+
+  const { logs, search, isLoading, error } = props
+  const logArray = logs ? logs.split("\n") : []
+  const filteredLogs = search === "" ? logArray : logArray.filter(l => l.includes(search))
+
+  const { page, setPage, pageSize, setPageSize, pageCount } = usePagination(filteredLogs.length, logPageSizeOptions[0])
+
+  const getCurrentLogs = () => {
+    let start = filteredLogs.length - page * pageSize
+    if (start < 0) {
+      start = 0
+    }
+    return filteredLogs.slice(start, start + pageSize).reverse()
+  }
+
+  if (isLoading) {
+    return (
+      <Box padding={'16px'}>
+        <CircularProgress />
+      </Box>
+    )
+  }
+
+  if (error) {
+    return <ErrorAlert error={error} expand={true} onClose={() => { }} />
+  }
+
+  if (filteredLogs.length === 0) {
+    return <BlankPage description={intl.formatMessage({ id: "app.general.noResult" })} />
+  }
+
+  return (
+    <Fragment>
       <List>
         {getCurrentLogs().map((l, index) => {
           return (
-
             <ListItem key={index}>
               <ListItemText>
                 <Typography color={getLogColor(l)}>{l}</Typography>
@@ -110,9 +109,11 @@ export default function Logs() {
         pageSizeOptions={[50, 100, 150, 200]}
         onPageSizeChange={(pageSize) => { setPageSize(pageSize) }}
       />
-    </div>
+    </Fragment >
   )
 }
+
+const logPageSizeOptions = [50, 100, 150, 200, 500]
 
 const logLimitOptions = [
   { label: "500", value: 500 },
@@ -126,8 +127,8 @@ const logLimitOptions = [
 const logColor = {
   "INFO": "primary",
   "ERROR": "error",
-  "WARN": "warning",
-  "DEBUG": "info",
+  "WARN": "primary",
+  "DEBUG": "primary",
 } as {
   [key: string]: string
 }

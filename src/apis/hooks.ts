@@ -1,4 +1,4 @@
-import { ClusterType, getClusterMembers } from "./cluster";
+import { ClusterType, getClusterMembers, getLogs } from "./cluster";
 import useSWR, { SWRConfiguration } from 'swr'
 import { getObjects } from "./object";
 import React from "react";
@@ -52,5 +52,31 @@ export function useObjects(cluster: ClusterType, config: SWRConfiguration | unde
     error,
     mutate,
     isLoading,
+  }
+}
+
+export const getLogsSWRKey = (cluster: ClusterType, tail: number) => {
+  return `logs/${cluster.name}/${tail}`
+}
+
+export function useLogs(cluster: ClusterType, tail: number, config: SWRConfiguration | undefined = undefined) {
+  // call mutate() to refresh data
+  // the key is import here. useSWR will use the key to cache data.
+  // the name parameter here is not used, but to trick useSWR to refresh data when cluster changes.
+  const { data, error, isLoading, mutate } = useSWR(
+    getLogsSWRKey(cluster, tail),
+    (name: string) => {
+      return getLogs(cluster, tail)
+    }
+  )
+
+  React.useEffect(() => {
+    mutate()
+  }, [cluster, tail])
+  return {
+    logs: data,
+    error,
+    mutate,
+    isLoading
   }
 }
