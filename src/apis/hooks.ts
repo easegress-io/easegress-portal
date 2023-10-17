@@ -19,7 +19,7 @@ export function useClusterMembers(cluster: ClusterType, config: SWRConfiguration
 
   React.useEffect(() => {
     mutate()
-  }, [cluster])
+  }, [cluster, mutate])
 
   return {
     members: data,
@@ -45,7 +45,7 @@ export function useObjects(cluster: ClusterType, config: SWRConfiguration | unde
 
   React.useEffect(() => {
     mutate()
-  }, [cluster])
+  }, [cluster, mutate])
 
   return {
     objects: data,

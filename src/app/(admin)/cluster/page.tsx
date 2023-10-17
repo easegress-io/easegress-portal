@@ -1,9 +1,11 @@
 "use client"
 
-import React from "react"
+import React, { Fragment } from "react";
 import { useIntl } from "react-intl"
 
-import { ClusterType, MemberType } from "@/apis/cluster"
+import { catchErrorMessage, loadYaml } from '@/common/utils';
+import { useSnackbar } from 'notistack';
+import { ClusterType, EgctlConfig, MemberType, ValidateEgctlConfig, parseEgctlConfig } from "@/apis/cluster"
 import clusterImage from '@/asserts/cluster.png'
 import heartbeatSVG from '@/asserts/heartbeat.svg'
 import nodeSVG from '@/asserts/node.svg'
@@ -14,24 +16,36 @@ import { useClusters } from "../../context"
 
 import { useClusterMembers } from "@/apis/hooks"
 import ErrorAlert from "@/components/ErrorAlert"
+import Spacer from "@/components/Spacer"
 import YamlEditorDialog from "@/components/YamlEditorDialog"
-import { Avatar, Button, Card, CardContent, CardHeader, Chip, CircularProgress, Grid, Paper, Stack, } from "@mui/material"
+import { Avatar, Button, Card, CardContent, CardHeader, Chip, CircularProgress, Grid, Paper, Stack, Typography } from "@mui/material"
 import yaml from 'js-yaml'
 import moment from 'moment'
 import Image from 'next/image'
 import { useRouter } from "next/navigation"
 import YamlViewer from "@/components/YamlViewer"
+import EditIcon from '@mui/icons-material/Edit';
 
 export default function Clusters() {
   const { clusters } = useClusters()
   const intl = useIntl()
-  const [viewYaml, setViewYaml] = React.useState({
-    open: false,
-    yaml: "",
-  })
+  const [createOpen, setCreateOpen] = React.useState(false)
+
+  const manageButtons = [
+    {
+      icon: <EditIcon />,
+      label: intl.formatMessage({ id: 'app.cluster.manage' }),
+      onClick: () => { setCreateOpen(true) }
+    },
+  ]
 
   return (
     <div>
+      <ManageBar buttons={manageButtons} ></ManageBar>
+      <CreateDialog
+        open={createOpen}
+        onClose={() => { setCreateOpen(false) }}
+      />
       <Grid container spacing={2}>
         {clusters.map((cluster) => (
           <Grid key={cluster.name} item xs={12}>
@@ -39,15 +53,7 @@ export default function Clusters() {
           </Grid>
         ))}
       </Grid>
-      <YamlEditorDialog
-        open={viewYaml.open}
-        onClose={() => { setViewYaml({ open: false, yaml: "" }) }}
-        title={intl.formatMessage({ id: "app.cluster.manage" })}
-        yaml={viewYaml.yaml}
-        onYamlChange={() => { }}
-        editorOptions={{ readOnly: false }}
-      />
-    </div>
+    </div >
   )
 }
 
@@ -231,5 +237,132 @@ function SingleClusterMember(props: SingleClusterMemberProps) {
         yaml={yamlDoc}
       />
     </Paper >
+  )
+}
+
+type SearchBarProps = {
+  buttons?: {
+    icon: React.ReactNode | undefined
+    label: string
+    onClick: () => void
+  }[]
+}
+
+function ManageBar({ buttons }: SearchBarProps) {
+  const { clusters, currentCluster, setCurrentClusterName } = useClusters()
+  const intl = useIntl()
+
+  return (
+    <Card style={{ boxShadow: 'none' }}>
+      <CardContent
+        style={{
+          // background: '#fafafa',
+          borderRadius: '12px',
+          padding: '16px',
+        }}
+      >
+        <Grid container spacing={1}>
+          <Grid item xs={12}>
+            <Grid
+              container
+              justifyContent="space-between"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+              }}
+            >
+              <Typography flexGrow={1} />
+
+              {buttons && buttons.map((button, index) => {
+                return <Fragment key={index}>
+                  <Spacer size={16} />
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    startIcon={button.icon}
+                    style={{
+                      height: '40px',
+                      lineHeight: '40px',
+                      textTransform: 'none',
+                      borderColor: '#DEDEDE',
+                      background: '#fff',
+                    }}
+                    onClick={button.onClick}
+                  >
+                    {button.label}
+                  </Button>
+                </Fragment>
+              })}
+            </Grid>
+          </Grid>
+        </Grid>
+      </CardContent>
+    </Card>
+  )
+}
+
+type CreateDialogProps = {
+  open: boolean
+  onClose: () => void
+}
+
+function CreateDialog({ open, onClose }: CreateDialogProps) {
+  const intl = useIntl()
+
+  const yamlValue = localStorage.getItem('easegress-rc-file')
+  const [yamlDoc, setYamlDoc] = React.useState(yamlValue || '')
+  const { enqueueSnackbar } = useSnackbar()
+
+  const onYamlChange = (value: string | undefined, ev: any) => {
+    setYamlDoc(value || '')
+  }
+
+  const { setClusters } = useClusters()
+
+
+  const actions = [
+    {
+      label: intl.formatMessage({ id: 'app.cluster.save' }),
+      onClick: () => {
+        const { result, err } = loadYaml(yamlDoc)
+        if (err !== "") {
+          enqueueSnackbar(intl.formatMessage({ id: 'app.general.invalidYaml' }, { error: err }), { variant: 'error' })
+          return
+        }
+
+        console.log(result)
+
+        const egctlConfig = result as EgctlConfig
+        const vaidateErr = ValidateEgctlConfig(egctlConfig)
+        if (vaidateErr !== "") {
+          enqueueSnackbar(intl.formatMessage({ id: 'app.general.invalidYaml' }, { error: vaidateErr }), { variant: 'error' })
+          return
+        }
+
+        let parsedEgctlConfig = parseEgctlConfig(egctlConfig)
+
+        setClusters(parsedEgctlConfig.clusters)
+
+        localStorage.setItem('easegress-rc-file', yamlDoc)
+        // egctlconfig to clusters
+        // set local storage
+
+        console.log(egctlConfig)
+
+
+        onClose()
+      }
+    },
+  ]
+
+  return (
+    <YamlEditorDialog
+      open={open}
+      onClose={onClose}
+      title={intl.formatMessage({ id: 'app.cluster.manage' })}
+      yaml={yamlDoc}
+      onYamlChange={onYamlChange}
+      actions={actions}
+    />
   )
 }

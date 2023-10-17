@@ -1,9 +1,10 @@
 "use client"
 
 import React from 'react'
-import { ClusterType } from '@/apis/cluster'
+import { ClusterType, parseEgctlConfig, EgctlConfig, defaultCluster, getCurrentClusterName, ValidateEgctlConfig } from '@/apis/cluster'
 import { translations } from '@/locale'
-import { ClusterContext, defaultCluster } from './context'
+import { ClusterContext } from './context'
+import { useSnackbar } from 'notistack';
 import { IntlProvider, useIntl } from 'react-intl';
 import { useRouter, usePathname } from 'next/navigation'
 import { SnackbarProvider } from 'notistack'
@@ -35,18 +36,68 @@ const StyledMaterialDesignContent = styled(MaterialDesignContent)(() => ({
     color: "#5f2120",
   },
 }));
+import { json } from 'stream/consumers'
+import { loadYaml } from '@/common/utils'
+import axios, { Axios, AxiosInstance, AxiosRequestConfig } from 'axios'
+import { validateConfig } from 'next/dist/server/config-shared'
+
+const defaultEgctlConfig = `
+  kind: Config
+
+  # current used context.
+  current-context: context-default
+
+  # "contexts" section contains "user" and "cluster" information, which informs egctl about which "user" should be used to access a specific "cluster".
+  contexts:
+    - context:
+        cluster: cluster-default
+        user: user-default
+      name: context-default
+
+  # "clusters" section contains information about the "cluster".
+  # "server" specifies the host address that egctl should access.
+  # "certificate-authority-data" in base64 contain the root certificate authority that the client uses to verify server certificates.
+  clusters:
+    - cluster:
+        server: http://localhost:2381
+        certificate-authority-data: ""
+      name: cluster-default
+
+  # "users" section contains "user" information.
+  # "username" and "password" are used for basic authentication.
+  # the pair ("client-key-data", "client-certificate-data") in base64 contains the client certificate.
+  users:
+    - name: user-default
+      user:
+        username: ""
+        password: ""
+        client-certificate-data: ""
+        client-key-data: ""
+`
 
 export default function RootLayout({ children, }: { children: React.ReactNode }) {
-  // TODO: load clusters from file or local storage.
-  const fakeCluster: ClusterType = {
-    name: "12381",
-    cluster: {
-      server: "http://localhost:12381",
-    }
+  let value = localStorage.getItem('easegress-rc-file')
+  if (value === null || value === "") {
+    value = defaultEgctlConfig
+    localStorage.setItem('easegress-rc-file', value)
   }
 
-  const [clusters, setClusters] = React.useState<ClusterType[]>([defaultCluster, fakeCluster])
-  const [currentClusterName, setCurrentClusterName] = React.useState<string>(defaultCluster.name)
+  let { result, err: yamlErr } = loadYaml(value)
+  let validateErr = ValidateEgctlConfig(result)
+  if (yamlErr !== "" || validateErr !== "") {
+    console.log("load and validate local storage egctl config failed: ", yamlErr, validateErr)
+    console.log("restore default egctl config")
+    value = defaultEgctlConfig
+    localStorage.setItem('easegress-rc-file', defaultEgctlConfig)
+  }
+
+  let { result: egctlConfig } = loadYaml(value)
+
+  let parsedEgctlConfig: EgctlConfig = parseEgctlConfig(egctlConfig)
+
+  const [clusters, setClusters] = React.useState<ClusterType[]>(parsedEgctlConfig.clusters)
+  const [currentClusterName, setCurrentClusterName] = React.useState<string>(getCurrentClusterName(parsedEgctlConfig))
+
   const clusterContext = {
     clusters,
     setClusters: (clusters: ClusterType[]) => {

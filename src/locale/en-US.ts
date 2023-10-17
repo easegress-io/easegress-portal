@@ -7,6 +7,7 @@ export const enUS = {
   'app.cluster.start': "Start",
   'app.cluster.heartbeat': "Heartbeat",
   'app.cluster.manage': "Manage Clusters",
+  'app.cluster.save': "Save",
 
   'app.log': 'Log',
   'app.log.limit': 'Log Limit',
