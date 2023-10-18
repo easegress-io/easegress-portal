@@ -16,7 +16,7 @@ import { useClusters } from "../../context"
 import { useClusterMembers } from "@/apis/hooks"
 import ErrorAlert from "@/components/ErrorAlert"
 import YamlEditorDialog from "@/components/YamlEditorDialog"
-import { Avatar, Button, Card, CardContent, CardHeader, Chip, CircularProgress, Grid, Paper, Stack, Typography } from "@mui/material"
+import { Avatar, Box, Button, Card, CardContent, CardHeader, Chip, CircularProgress, Grid, Paper, Stack, Typography } from "@mui/material"
 import yaml from 'js-yaml'
 import moment from 'moment'
 import Image from 'next/image'
@@ -24,6 +24,7 @@ import { useRouter } from "next/navigation"
 import YamlViewer from "@/components/YamlViewer"
 import EditIcon from '@mui/icons-material/Edit';
 import { SearchBarLayout } from "@/components/SearchBar";
+import { primaryColor } from "@/app/style";
 
 export default function Clusters() {
   const { clusters } = useClusters()
@@ -39,20 +40,24 @@ export default function Clusters() {
   ]
 
   return (
-    <div>
-      <SearchBarLayout buttons={manageButtons} />
+    <Card style={{ boxShadow: "none" }}>
+      <Box marginLeft={"24px"} marginRight={"24px"} marginTop={"24px"} marginBottom={"24px"}>
+        <SearchBarLayout buttons={manageButtons} />
+        <Box marginTop={"20px"}>
+          <Grid container spacing={2}>
+            {clusters.map((cluster) => (
+              <Grid key={cluster.name} item xs={12}>
+                <SingleCluster cluster={cluster} />
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+      </Box>
       <EditConfigDialog
         open={createOpen}
         onClose={() => { setCreateOpen(false) }}
       />
-      <Grid container spacing={2}>
-        {clusters.map((cluster) => (
-          <Grid key={cluster.name} item xs={12}>
-            <SingleCluster cluster={cluster} />
-          </Grid>
-        ))}
-      </Grid>
-    </div >
+    </Card>
   )
 }
 
@@ -64,7 +69,12 @@ function SingleCluster({ cluster }: { cluster: ClusterType }) {
   const [errExpand, setErrExpand] = React.useState(false)
 
   return (
-    <Card elevation={1}>
+    <Card
+      elevation={0}
+      style={{
+        border: "1px solid #EAEBEE",
+      }}
+    >
       <CardHeader
         style={{ paddingBottom: 0 }}
         title={
@@ -156,7 +166,7 @@ function SingleClusterMember(props: SingleClusterMemberProps) {
   ]
 
   return (
-    <Paper style={{ width: '100%', margin: "16px 0 0 0", border: "1px solid #dee1e7" }} >
+    <Paper elevation={0} style={{ width: '100%', margin: "16px 0 0 0", border: "1px solid #dee1e7" }} >
       <Stack direction={"row"}
         justifyContent="flex-start"
         alignItems="center"
@@ -225,7 +235,13 @@ function SingleClusterMember(props: SingleClusterMemberProps) {
                 </div>
               )
             })}
-            <Button variant="outlined" style={{ textTransform: "none" }} onClick={() => { setDetails(true) }}>Details</Button>
+            <Button
+              variant="outlined"
+              style={{ textTransform: "none", color: primaryColor, borderColor: primaryColor }}
+              onClick={() => { setDetails(true) }}
+            >
+              Details
+            </Button>
           </Stack>
         </div>
       </Stack >

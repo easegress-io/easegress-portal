@@ -6,7 +6,7 @@ import { useIntl } from "react-intl"
 import { isNullOrUndefined } from "@/common/utils"
 import { useClusters } from "../../context"
 
-import { Box, CircularProgress, List, ListItem, ListItemText, Typography, } from "@mui/material"
+import { Box, Card, CircularProgress, List, ListItem, ListItemText, Typography, } from "@mui/material"
 import { SearchBarLayout, SearchText, SelectText, SwitchCluster } from "@/components/SearchBar"
 import Paginations, { usePagination } from "@/components/Paginations"
 import { useLogs } from "@/apis/hooks"
@@ -21,32 +21,36 @@ export default function Logs() {
   const { logs, error, isLoading, mutate } = useLogs(currentCluster, tail)
 
   return (
-    <div>
-      <SearchBarLayout
-        contents={[
-          <SwitchCluster key={"switch-cluster"} />,
-          <SelectText
-            key={"log-limit"}
-            label={intl.formatMessage({ id: "app.log.limit" })}
-            options={logLimitOptions}
-            value={tail}
-            onChange={(value: number | string) => { setTail(parseInt(value as string, 10)) }}
-          />,
-          <SearchText
-            key={"search"}
-            search={search}
-            onSearchChange={(value: string) => { setSearch(value) }}
-          />,
-        ]}
-        buttons={[
-          {
-            label: intl.formatMessage({ id: "app.log.refresh" }),
-            onClick: () => { mutate() },
-          },
-        ]}
-      />
-      <LogContent logs={logs || ""} search={search} isLoading={isLoading} error={error} />
-    </div>
+    <Card style={{ boxShadow: "none" }}>
+      <Box marginLeft={"24px"} marginRight={"24px"} marginTop={"24px"} marginBottom={"24px"}>
+        <SearchBarLayout
+          contents={[
+            <SwitchCluster key={"switch-cluster"} />,
+            <SelectText
+              key={"log-limit"}
+              label={intl.formatMessage({ id: "app.log.limit" })}
+              options={logLimitOptions}
+              value={tail}
+              onChange={(value: number | string) => { setTail(parseInt(value as string, 10)) }}
+            />,
+            <SearchText
+              key={"search"}
+              search={search}
+              onSearchChange={(value: string) => { setSearch(value) }}
+            />,
+          ]}
+          buttons={[
+            {
+              label: intl.formatMessage({ id: "app.log.refresh" }),
+              onClick: () => { mutate() },
+            },
+          ]}
+        />
+        <Box marginTop={"20px"}>
+          <LogContent logs={logs || ""} search={search} isLoading={isLoading} error={error} />
+        </Box>
+      </Box>
+    </Card>
   )
 }
 
@@ -92,7 +96,12 @@ function LogContent(props: LogContentProps) {
 
   return (
     <Fragment>
-      <List>
+      <List
+        style={{
+          border: "1px solid #EAEBEE",
+          borderRadius: "4px",
+        }}
+      >
         {getCurrentLogs().map((l, index) => {
           return (
             <ListItem key={index}>
@@ -103,14 +112,16 @@ function LogContent(props: LogContentProps) {
           )
         })}
       </List>
-      <Paginations
-        page={page}
-        pageCount={pageCount}
-        onPageChange={(page) => { setPage(page) }}
-        pageSize={pageSize}
-        pageSizeOptions={[50, 100, 150, 200]}
-        onPageSizeChange={(pageSize) => { setPageSize(pageSize) }}
-      />
+      <Box marginTop={"10px"}>
+        <Paginations
+          page={page}
+          pageCount={pageCount}
+          onPageChange={(page) => { setPage(page) }}
+          pageSize={pageSize}
+          pageSizeOptions={[50, 100, 150, 200]}
+          onPageSizeChange={(pageSize) => { setPageSize(pageSize) }}
+        />
+      </Box>
     </Fragment >
   )
 }

@@ -1,10 +1,12 @@
 import { useClusters } from "@/app/context";
-import { Autocomplete, Button, Card, CardContent, Grid, IconButton, InputAdornment, MenuItem, TextField, Typography } from "@mui/material";
+import { Autocomplete, Button, Card, CardContent, Grid, IconButton, InputAdornment, MenuItem, Paper, Stack, TextField, Typography } from "@mui/material";
 import { useIntl } from "react-intl";
 import SearchIcon from '@mui/icons-material/Search';
 import ClearIcon from '@mui/icons-material/Clear';
 import Spacer from "@/components/Spacer"
 import React, { Fragment } from "react";
+import { primaryColor } from "@/app/style";
+import TextTypo from "./TextTypo";
 
 export type SearchBarProps = {
   search: string
@@ -39,61 +41,51 @@ export type SearchBarLayoutProps = {
 
 export function SearchBarLayout(props: SearchBarLayoutProps) {
   const { contents, buttons } = props
-
   return (
-    <Card style={{ boxShadow: 'none' }}>
-      <CardContent
-        style={{
-          background: '#fafafa',
-          borderRadius: '12px',
-          padding: '16px',
-        }}
+    <Paper elevation={0}>
+      <Stack
+        direction="row"
+        justifyContent="flex-start"
+        alignItems="center"
+        spacing={0}
       >
-        <Grid container spacing={1}>
-          <Grid item xs={12}>
-            <Grid
-              container
-              justifyContent="space-between"
+        {contents && contents.map((content, index) => {
+          return (
+            <Fragment key={index}>
+              {content}
+              <Spacer size={16} />
+            </Fragment>)
+        })}
+
+        <Typography flexGrow={1} />
+
+        {buttons && buttons.map((button, index) => {
+          return <Fragment key={index}>
+            <Spacer size={16} />
+            <Button
+              variant="outlined"
+              startIcon={button.icon}
               style={{
-                display: 'flex',
-                alignItems: 'center',
+                height: '40px',
+                lineHeight: '40px',
+                textTransform: 'none',
+                border: "1px solid #EAEBEE",
+                color: primaryColor
               }}
+              onClick={button.onClick}
             >
-              {contents && contents.map((content, index) => {
-                return (
-                  <Fragment key={index}>
-                    {content}
-                    <Spacer size={16} />
-                  </Fragment>)
-              })}
-
-              <Typography flexGrow={1} />
-
-              {buttons && buttons.map((button, index) => {
-                return <Fragment key={index}>
-                  <Spacer size={16} />
-                  <Button
-                    variant="outlined"
-                    color="primary"
-                    startIcon={button.icon}
-                    style={{
-                      height: '40px',
-                      lineHeight: '40px',
-                      textTransform: 'none',
-                      borderColor: '#DEDEDE',
-                      background: '#fff',
-                    }}
-                    onClick={button.onClick}
-                  >
-                    {button.label}
-                  </Button>
-                </Fragment>
-              })}
-            </Grid>
-          </Grid>
-        </Grid>
-      </CardContent>
-    </Card>
+              <TextTypo
+                text={button.label}
+                color={primaryColor}
+                fontSize="14px"
+                fontWeight="500"
+                lineHeight="16px"
+              />
+            </Button>
+          </Fragment>
+        })}
+      </Stack>
+    </Paper>
   )
 }
 

@@ -5,6 +5,7 @@ import _ from 'lodash'
 import React from "react"
 import { useIntl } from "react-intl"
 import yaml from 'js-yaml'
+import { TableHeadCell } from "../common"
 
 export function getGRPCTableData(server: grpcserver.GRPCServer) {
   const hosts: string[] = []
@@ -49,7 +50,7 @@ export function GRPCServerRuleTable(props: GRPCServerRuleTableProps) {
         <TableRow>
           {tableHeads.map((head, index) => {
             return (
-              <TableCell key={index}>{head}</TableCell>
+              <TableHeadCell key={index} text={head} />
             )
           })}
         </TableRow>

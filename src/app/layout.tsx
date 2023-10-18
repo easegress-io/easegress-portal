@@ -3,7 +3,7 @@
 import React from 'react'
 import { ClusterType, parseEgctlConfig, EgctlConfig, defaultCluster, getCurrentClusterName, validateEgctlConfig } from '@/apis/cluster'
 import { translations } from '@/locale'
-import { ClusterContext } from './context'
+import { ClusterContext, defaultEgctlConfig } from './context'
 import { useSnackbar } from 'notistack';
 import { IntlProvider, useIntl } from 'react-intl';
 import { useRouter, usePathname } from 'next/navigation'
@@ -30,6 +30,8 @@ import DescriptionIcon from '@mui/icons-material/Description';
 import { loadYaml } from '@/common/utils'
 
 import { MaterialDesignContent } from 'notistack'
+import { primaryColor } from './style'
+import TextTypo from '@/components/TextTypo'
 
 const StyledMaterialDesignContent = styled(MaterialDesignContent)(() => ({
   '&.notistack-MuiContent-error': {
@@ -37,39 +39,6 @@ const StyledMaterialDesignContent = styled(MaterialDesignContent)(() => ({
     color: "#5f2120",
   },
 }));
-
-const defaultEgctlConfig = `kind: Config
-
-# current used context.
-current-context: context-default
-
-# "contexts" section contains "user" and "cluster" information, which informs egctl about which "user" should be used to access a specific "cluster".
-contexts:
-  - context:
-      cluster: cluster-default
-      user: user-default
-    name: context-default
-
-# "clusters" section contains information about the "cluster".
-# "server" specifies the host address that egctl should access.
-# "certificate-authority-data" in base64 contain the root certificate authority that the client uses to verify server certificates.
-clusters:
-  - cluster:
-      server: http://localhost:2381
-      certificate-authority-data: ""
-    name: cluster-default
-
-# "users" section contains "user" information.
-# "username" and "password" are used for basic authentication.
-# the pair ("client-key-data", "client-certificate-data") in base64 contains the client certificate.
-users:
-  - name: user-default
-    user:
-      username: ""
-      password: ""
-      client-certificate-data: ""
-      client-key-data: ""
-`
 
 export default function RootLayout({ children, }: { children: React.ReactNode }) {
   return (
@@ -90,9 +59,12 @@ export default function RootLayout({ children, }: { children: React.ReactNode })
             <Box component="main" sx={{
               minHeight: "calc(100vh - 30px)",
               flexGrow: 1,
-              p: 3,
               display: 'flex',
+              paddingTop: "10px",
+              paddingLeft: "6px",
+              paddingRight: "6px",
               flexDirection: 'column',
+              background: "var(--fill-2, #F7F8FA)",
             }}>
               <Toolbar />
               <SnackbarProvider
@@ -195,17 +167,39 @@ function TopAppBar() {
   const intl = useIntl()
 
   return (
-    <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
+    <AppBar position="fixed"
+      elevation={0}
+      sx={{
+        zIndex: (theme) => theme.zIndex.drawer + 1,
+        background: "#FFF",
+        borderBottom: "1px solid #E5E6EB",
+        height: "60px",
+      }}
+    >
       <Toolbar>
-        <Stack spacing={1} direction={"row"}>
+        <Stack
+          direction="row"
+          justifyContent="flex-start"
+          alignItems="center"
+          spacing={"12px"}
+        >
           <Image
+            style={{
+              width: "32px",
+              height: "32px",
+              flexShrink: 0,
+            }}
             src={easegressSVG}
             alt={"easegress"}
           />
           <ButtonBase onClick={() => { router.push('/') }}>
-            <Typography variant="h6" noWrap component="div" >
-              Easegress
-            </Typography>
+            <TextTypo text={"Easegress"}
+              color='#000'
+              fontFamily="Roboto"
+              fontSize='20px'
+              fontWeight='500'
+              lineHeight='16px'
+            />
           </ButtonBase>
         </Stack>
         <Typography flexGrow={1} />
@@ -213,18 +207,19 @@ function TopAppBar() {
           direction="row"
           justifyContent="center"
           alignItems="center"
-          spacing={1}
+          spacing={0}
         >
           <Tooltip title={intl.formatMessage({ id: "app.general.github" })}>
             <IconButton
-              style={{ background: "white", borderRadius: "10px", }}
+              style={{ background: "transparent", borderRadius: "10px" }}
               size='small'
               onClick={() => { window.open("https://github.com/megaease/easegress", "_blank") }}
             >
               <GitHubIcon
                 style={{
-                  width: '24px',
-                  height: '24px',
+                  width: '21px',
+                  height: '21px',
+                  color: "#2F54EB",
                 }}
                 color='primary'
               />
@@ -232,7 +227,7 @@ function TopAppBar() {
           </Tooltip>
           <Tooltip title={intl.formatMessage({ id: "app.general.megaease" })}>
             <IconButton
-              style={{ background: "white", borderRadius: "10px", }}
+              style={{ background: "transparent", borderRadius: "10px" }}
               size="small"
               onClick={() => { window.open("https://megaease.com", "_blank") }}
             >
@@ -247,29 +242,33 @@ function TopAppBar() {
           </Tooltip>
         </Stack>
       </Toolbar>
-    </AppBar>)
+    </AppBar >)
 }
 
 function SideBar() {
-  const drawerWidth = 240
   const intl = useIntl()
   const router = useRouter()
   const pathname = usePathname()
 
+  const iconStyle = {
+    width: "20px",
+    height: "20px",
+  }
   const items = [
-    { name: intl.formatMessage({ id: 'app.cluster' }), url: '/cluster', icon: <FormatListBulletedIcon /> },
-    { name: intl.formatMessage({ id: 'app.traffic' }), url: '/traffic', icon: <FilterAltIcon /> },
-    { name: intl.formatMessage({ id: 'app.pipeline' }), url: '/pipeline', icon: <FormatLineSpacingIcon /> },
-    { name: intl.formatMessage({ id: 'app.controller' }), url: '/controller', icon: <BuildIcon style={{ transform: 'scaleX(-1)' }} /> },
-    { name: intl.formatMessage({ id: 'app.log' }), url: '/log', icon: <DescriptionIcon /> },
+    { name: intl.formatMessage({ id: 'app.cluster' }), url: '/cluster', icon: <FormatListBulletedIcon style={iconStyle} /> },
+    { name: intl.formatMessage({ id: 'app.traffic' }), url: '/traffic', icon: <FilterAltIcon style={iconStyle} /> },
+    { name: intl.formatMessage({ id: 'app.pipeline' }), url: '/pipeline', icon: <FormatLineSpacingIcon style={iconStyle} /> },
+    { name: intl.formatMessage({ id: 'app.controller' }), url: '/controller', icon: <BuildIcon style={{ transform: 'scaleX(-1)', ...iconStyle }} /> },
+    { name: intl.formatMessage({ id: 'app.log' }), url: '/log', icon: <DescriptionIcon style={iconStyle} /> },
   ]
 
   const getCurrentTabValue = () => {
     const value = '/' + pathname.split('/')[1]
     const item = items.find((item) => item.url === value)
-    return item ? item.url : false
+    return item ? item.url : ""
   }
 
+  const drawerWidth = 220
   return (
     <Drawer
       variant="permanent"
@@ -280,13 +279,26 @@ function SideBar() {
       }}
     >
       <Toolbar />
-      <Box sx={{ overflow: 'auto' }}>
-        <Tabs orientation='vertical' value={getCurrentTabValue()} >
+      <Box>
+        <Tabs orientation='vertical' value={false}
+          sx={{
+            marginRight: "8px",
+            marginLeft: "8px"
+          }}
+        >
           {items.map((item, index) => {
+            const selected = getCurrentTabValue() === item.url
             return (
               <Tab
                 key={index}
-                label={item.name}
+                label={<TextTypo
+                  text={item.name}
+                  color={selected ? primaryColor : "var(--color-text-2, #4E5969)"}
+                  fontFamily="Roboto"
+                  fontSize='14px'
+                  fontWeight='500'
+                  lineHeight='20px'
+                />}
                 value={item.url}
                 onClick={() => { router.push(item.url) }}
                 icon={item.icon}
@@ -294,7 +306,11 @@ function SideBar() {
                 style={{
                   textTransform: 'none',
                   justifyContent: 'flex-start',
-                  paddingLeft: '22px',
+                  color: selected ? primaryColor : undefined,
+                  background: selected ? '#F2F3F5' : undefined,
+                  height: "38px",
+                  display: "flex",
+                  marginBottom: "4px",
                 }}
               />
             )
@@ -314,6 +330,7 @@ function Footer() {
       spacing={0}
       sx={{
         marginTop: 'auto',
+        background: "var(--fill-2, #F7F8FA)",
       }}
     >
       <IconButton

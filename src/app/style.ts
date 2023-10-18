@@ -1,0 +1,1 @@
+export const primaryColor = "var(--Focus, #2F54EB)"

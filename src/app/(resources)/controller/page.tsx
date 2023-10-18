@@ -16,6 +16,8 @@ import TextButton from "@/components/TextButton"
 import yaml from "js-yaml"
 import { useResourcesContext } from "../context"
 import { useEditResource } from "../hooks"
+import { primaryColor } from "@/app/style"
+import { TableHeadCell } from "../common"
 
 export default function Controller() {
   const { currentCluster } = useClusters()
@@ -102,15 +104,20 @@ export default function Controller() {
     },
   ]
 
+  const header = [
+    { text: intl.formatMessage({ id: 'app.general.name' }), style: { width: "350px" } },
+    { text: intl.formatMessage({ id: 'app.general.kind' }), style: { flex: 1 } },
+    { text: intl.formatMessage({ id: 'app.general.actions' }), style: { width: "350px" } },
+  ]
   return (
-    <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+    <Paper elevation={0} sx={{ width: '100%', overflow: 'hidden', border: "1px solid #EAEBEE" }}>
       <TableContainer>
         <Table stickyHeader aria-label="sticky table">
           <TableHead>
             <TableRow>
-              <TableCell style={{ width: "350px" }}>{intl.formatMessage({ id: 'app.general.name' })} </TableCell>
-              <TableCell style={{ flex: 1 }}>{intl.formatMessage({ id: 'app.general.kind' })} </TableCell>
-              <TableCell style={{ width: "350px" }}>{intl.formatMessage({ id: 'app.general.actions' })} </TableCell>
+              {header.map((h, index) => {
+                return <TableHeadCell key={index} text={h.text} style={h.style} />
+              })}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -173,7 +180,7 @@ function ControllerTableRow(props: ControllerTableRowProps) {
         <TableCell>{data.name}</TableCell>
         {/* kind */}
         <TableCell>
-          <Chip label={data.kind} color="primary" variant="outlined" size="small" />
+          <Chip label={data.kind} style={{ color: primaryColor }} variant="outlined" size="small" />
         </TableCell>
 
         {/* actions */}

@@ -16,6 +16,7 @@ import { ResourceContext } from './context';
 import YamlViewer from '@/components/YamlViewer';
 import { useDeleteResource } from './hooks';
 import SimpleDialog from '@/components/SimpleDialog';
+import { Box, Card, CardContent, Paper } from '@mui/material';
 
 export default function Layout({ children, }: { children: React.ReactNode }) {
   const intl = useIntl()
@@ -49,24 +50,32 @@ export default function Layout({ children, }: { children: React.ReactNode }) {
 
   return (
     <div>
-      <SearchBar search={search} onSearchChange={(value: string) => { setSearch(value) }} buttons={searchBarButtons} />
+      <ResourceContext.Provider value={{
+        search, setSearch, viewYaml, setViewYaml, deleteResource: deleteResource.state, setDeleteResource: deleteResource.setState,
+      }}>
+        <Card style={{ boxShadow: "none" }}>
+          <Box marginLeft={"24px"} marginRight={"24px"} marginTop={"24px"} marginBottom={"24px"}>
+            <SearchBar search={search} onSearchChange={(value: string) => { setSearch(value) }} buttons={searchBarButtons} />
+            <Box marginTop={"20px"}>
+              {children}
+            </Box>
+          </Box>
+        </Card>
+      </ResourceContext.Provider>
+      {/* create */}
       <CreateDialog
         open={createOpen}
         onClose={() => { setCreateOpen(false) }}
         cluster={currentCluster}
         mutate={() => { mutate(getObjectsSWRKey(currentCluster)) }}
       />
-      <ResourceContext.Provider value={{
-        search, setSearch, viewYaml, setViewYaml, deleteResource: deleteResource.state, setDeleteResource: deleteResource.setState,
-      }}>
-        {children}
-      </ResourceContext.Provider>
       {/* view only */}
       <YamlViewer
         open={viewYaml.open}
         onClose={() => { setViewYaml({ open: false, yaml: "" }) }}
         yaml={viewYaml.yaml}
       />
+      {/* delete */}
       <SimpleDialog
         open={deleteResource.open}
         onClose={deleteResource.onClose}

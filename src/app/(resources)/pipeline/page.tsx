@@ -21,6 +21,8 @@ import FlowChart from "./FlowChart"
 import { editor } from 'monaco-editor';
 import Close from "@mui/icons-material/Close"
 import { Editor } from "@monaco-editor/react"
+import { primaryColor } from "@/app/style"
+import { TableHeadCell } from "../common"
 
 export default function Pipeline() {
   const intl = useIntl()
@@ -143,17 +145,22 @@ export default function Pipeline() {
     },
   ]
 
+  const header = [
+    { text: intl.formatMessage({ id: 'app.general.name' }), style: { width: "350px" } },
+    { text: intl.formatMessage({ id: 'app.pipeline.tags' }), style: { width: "200px" } },
+    { text: intl.formatMessage({ id: 'app.pipeline.resilience' }), style: { width: "350px" } },
+    { text: intl.formatMessage({ id: 'app.pipeline.usedBy' }), style: { width: "350px" } },
+    { text: intl.formatMessage({ id: 'app.general.actions' }), style: { width: "350px" } },
+  ]
   return (
-    <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+    <Paper elevation={0} sx={{ width: '100%', overflow: 'hidden', border: "1px solid #EAEBEE" }}>
       <TableContainer>
         <Table stickyHeader aria-label="sticky table">
           <TableHead>
             <TableRow>
-              <TableCell style={{ width: "350px" }}>{intl.formatMessage({ id: 'app.general.name' })} </TableCell>
-              <TableCell style={{ width: "200px" }}>{intl.formatMessage({ id: 'app.pipeline.tags' })} </TableCell>
-              <TableCell style={{ width: "350px" }}>{intl.formatMessage({ id: 'app.pipeline.resilience' })} </TableCell>
-              <TableCell style={{ width: "350px" }}>{intl.formatMessage({ id: 'app.pipeline.usedBy' })} </TableCell>
-              <TableCell style={{ width: "350px" }}>{intl.formatMessage({ id: 'app.general.actions' })} </TableCell>
+              {header.map((h, index) => {
+                return <TableHeadCell key={index} text={h.text} style={h.style} />
+              })}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -305,7 +312,7 @@ function TrafficTableRow(props: TrafficTableRowProps) {
               {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
             </IconButton>
             <ButtonBase onClick={showDetails}>
-              <Typography fontSize={16} color={"primary"}>{pipeline.name}</Typography>
+              <Typography fontSize={16} style={{ color: primaryColor }}>{pipeline.name}</Typography>
             </ButtonBase>
           </Stack>
         </TableCell>
@@ -327,7 +334,7 @@ function TrafficTableRow(props: TrafficTableRowProps) {
               {pipeline.resilience.map((r, index) => {
                 return <div key={index}>
                   <TextButton title={r.name} onClick={() => { openViewYaml(yaml.dump(r)) }} />
-                  <Chip sx={{ marginLeft: 1 }} size="small" label={r.kind} color="primary" variant="outlined" />
+                  <Chip sx={{ marginLeft: 1 }} size="small" label={r.kind} style={{ color: primaryColor }} variant="outlined" />
                 </div>
               })}
             </Stack> :
@@ -354,7 +361,7 @@ function TrafficTableRow(props: TrafficTableRowProps) {
                     spacing={1}
                   >
                     <TextButton title={server.name} onClick={() => { openViewYaml(yaml.dump(server)) }} />
-                    <Chip label={getKindChipLabel(server.kind)} color="primary" variant="outlined" size="small" />
+                    <Chip label={getKindChipLabel(server.kind)} style={{ color: primaryColor }} variant="outlined" size="small" />
                   </Stack>
                 })}
               </Stack>
@@ -444,7 +451,7 @@ function PipelineFilterTable(props: PipelineFilterTableProps) {
         <TableRow>
           {tableHeads.map((head, index) => {
             return (
-              <TableCell key={index}>{head}</TableCell>
+              <TableHeadCell key={index} text={head} />
             )
           })}
         </TableRow>

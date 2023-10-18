@@ -21,6 +21,8 @@ import { TableData } from "./types"
 import { HTTPServerRuleTable, getHTTPTableData } from "./http"
 import { GRPCServerRuleTable, getGRPCTableData } from "./grpc"
 import { useEditResource } from "../hooks"
+import { primaryColor } from "@/app/style"
+import { TableHeadCell } from "../common"
 
 export default function Traffic() {
   const intl = useIntl()
@@ -134,16 +136,21 @@ export default function Traffic() {
     },
   ]
 
+  const header = [
+    { text: intl.formatMessage({ id: 'app.general.name' }), style: { width: "350px" } },
+    { text: intl.formatMessage({ id: 'app.traffic.host' }), style: { flex: 1 } },
+    { text: intl.formatMessage({ id: 'app.traffic.port' }), style: { width: "150px" } },
+    { text: intl.formatMessage({ id: 'app.general.actions' }), style: { width: "350px" } },
+  ]
   return (
-    <Paper sx={{ width: '100%', overflow: 'hidden' }}>
+    <Paper elevation={0} sx={{ width: '100%', overflow: 'hidden', border: "1px solid #EAEBEE" }}>
       <TableContainer>
         <Table stickyHeader aria-label="sticky table">
           <TableHead>
             <TableRow>
-              <TableCell style={{ width: "350px" }}>{intl.formatMessage({ id: 'app.general.name' })} </TableCell>
-              <TableCell style={{ flex: 1 }}>{intl.formatMessage({ id: 'app.traffic.host' })} </TableCell>
-              <TableCell style={{ width: "150px" }}>{intl.formatMessage({ id: 'app.traffic.port' })} </TableCell>
-              <TableCell style={{ width: "350px" }}>{intl.formatMessage({ id: 'app.general.actions' })} </TableCell>
+              {header.map((h, index) => {
+                return <TableHeadCell key={index} text={h.text} style={h.style} />
+              })}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -222,9 +229,9 @@ function TrafficTableRow(props: TrafficTableRowProps) {
               {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
             </IconButton>
             <ButtonBase onClick={showDetails}>
-              <Typography fontSize={16} color={"primary"}>{data.name}</Typography>
+              <Typography fontSize={16} style={{ color: primaryColor }}>{data.name}</Typography>
             </ButtonBase>
-            <Chip label={getKindChipLabel(data.kind)} color="primary" variant="outlined" size="small" />
+            <Chip label={getKindChipLabel(data.kind)} style={{ color: primaryColor }} variant="outlined" size="small" />
           </Stack>
         </TableCell>
 

@@ -1,3 +1,4 @@
+import { primaryColor } from "@/app/style"
 import { Button, ButtonBase } from "@mui/material"
 
 export type TextButtonProps = {
@@ -20,8 +21,9 @@ export default function TextButton(props: TextButtonProps) {
           backgroundColor: 'transparent',
         },
         textTransform: 'none',
+        color: color === 'primary' ? primaryColor : undefined,
       }}
-      color={color as any}
+      color={color === "primary" ? undefined : color as any}
       onClick={onClick}
       {...other}
     >
