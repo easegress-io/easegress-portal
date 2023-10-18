@@ -183,7 +183,7 @@ export default function Pipeline() {
   )
 }
 
-export type EditPipelineDialogProps = {
+type EditPipelineDialogProps = {
   open: boolean
   onClose: () => void
   yaml: string
@@ -407,12 +407,12 @@ function TrafficTableRow(props: TrafficTableRowProps) {
   )
 }
 
-export type PipelineFilterTableProps = {
+type PipelineFilterTableProps = {
   pipeline: pipeline.Pipeline
   onViewYaml: (yaml: string) => void
 }
 
-export function PipelineFilterTable(props: PipelineFilterTableProps) {
+function PipelineFilterTable(props: PipelineFilterTableProps) {
   const intl = useIntl()
   const { pipeline, onViewYaml } = props
   const getFlow = (pipeline: pipeline.Pipeline) => {

@@ -154,6 +154,7 @@ function ClusterContextProvider({ children }: { children: React.ReactNode }) {
 
     const egctlConfig = parseEgctlConfig(result)
     setConfig(egctlConfig)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const clusterContext = {

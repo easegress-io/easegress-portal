@@ -24,14 +24,16 @@ export default function Logs() {
     <div>
       <SearchBarLayout
         contents={[
-          <SwitchCluster />,
+          <SwitchCluster key={"switch-cluster"} />,
           <SelectText
+            key={"log-limit"}
             label={intl.formatMessage({ id: "app.log.limit" })}
             options={logLimitOptions}
             value={tail}
             onChange={(value: number | string) => { setTail(parseInt(value as string, 10)) }}
           />,
           <SearchText
+            key={"search"}
             search={search}
             onSearchChange={(value: string) => { setSearch(value) }}
           />,

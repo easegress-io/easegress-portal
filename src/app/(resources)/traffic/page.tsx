@@ -37,18 +37,18 @@ export default function Traffic() {
   const httpServers = searchEGObject(objects?.httpServers) as httpserver.HTTPServer[]
   const grpcServers = searchEGObject(objects?.grpcServers) as grpcserver.GRPCServer[]
 
-  const pipelines = objects?.pipelines || []
   const [pipelineMap, setPipelineMap] = React.useState({} as { [key: string]: pipeline.Pipeline })
   const getPipeline = (name: string): pipeline.Pipeline | undefined => {
     return pipelineMap[name]
   }
   React.useEffect(() => {
+    const pipelines = objects?.pipelines || []
     const map = {} as { [key: string]: pipeline.Pipeline }
     pipelines.forEach(p => {
       map[p.name] = p
     })
     setPipelineMap(map)
-  }, [pipelines])
+  }, [objects])
 
   const [expandValues, setExpandValues] = React.useState<{ [key: string]: boolean }>({})
   const getExpandValue = (server: EGObject) => {

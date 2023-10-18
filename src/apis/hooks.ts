@@ -72,7 +72,7 @@ export function useLogs(cluster: ClusterType, tail: number, config: SWRConfigura
 
   React.useEffect(() => {
     mutate()
-  }, [cluster, tail])
+  }, [cluster, tail, mutate])
   return {
     logs: data,
     error,

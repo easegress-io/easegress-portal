@@ -20,8 +20,8 @@ export default function SearchBar({ search, onSearchChange, buttons }: SearchBar
   return (
     <SearchBarLayout
       contents={[
-        <SwitchCluster />,
-        <SearchText search={search} onSearchChange={onSearchChange} />,
+        <SwitchCluster key={"switch-cluster"} />,
+        <SearchText key={"search"} search={search} onSearchChange={onSearchChange} />,
       ]}
       buttons={buttons}
     />
