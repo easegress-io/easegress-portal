@@ -146,7 +146,8 @@ export function parseEgctlConfig(config: EgctlConfig): EgctlConfig {
       })
     }
 
-    if (user?.user?.username !== "") {
+    let username = user?.user?.username || ""
+    if (username !== "") {
       axiosConfig.auth = {
         username: user?.user?.username || '',
         password: user?.user?.password || '',
