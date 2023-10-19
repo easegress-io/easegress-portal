@@ -213,7 +213,7 @@ function TopAppBar() {
             <IconButton
               style={{ background: "transparent", borderRadius: "10px" }}
               size='small'
-              onClick={() => { window.open("https://github.com/megaease/easegress", "_blank") }}
+              onClick={() => { window.open("https://github.com/megaease/easegress-portal", "_blank") }}
             >
               <GitHubIcon
                 style={{
@@ -229,7 +229,7 @@ function TopAppBar() {
             <IconButton
               style={{ background: "transparent", borderRadius: "10px" }}
               size="small"
-              onClick={() => { window.open("https://megaease.com", "_blank") }}
+              onClick={() => { window.open("https://megaease.com/docs/easegress/", "_blank") }}
             >
               <Image
                 style={{
