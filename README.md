@@ -32,6 +32,22 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
 
+## Using Docker
+
+**1. [Install Docker](https://docs.docker.com/get-docker/) on your machine.**
+
+**2. Build your container:**
+```bash
+docker build -t megaease/easegress-portal -f rootfs/Dockerfile .
+```
+
+**3. Run your container:**
+```bash
+docker run -p 3000:3000 megaease/easegress-portal
+```
+
+You can view your images created with `docker images`.
+
 ## Screenshots
 
 **1. Cluster Management**
