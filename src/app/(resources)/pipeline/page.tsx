@@ -2,9 +2,9 @@
 
 import { useObjects } from "@/apis/hooks"
 import { useClusters } from "@/app/context"
-import React from "react"
+import React, { Fragment } from "react"
 import { EGObject, getObjectStatus, pipeline, updateObject } from "@/apis/object"
-import { Avatar, Box, Button, ButtonBase, Chip, CircularProgress, Collapse, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material"
+import { Avatar, Box, Button, ButtonBase, Chip, CircularProgress, Collapse, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, Stack, TableCell, TableRow, Typography } from "@mui/material"
 import { useIntl } from "react-intl"
 import { useSnackbar } from "notistack"
 import { catchErrorMessage, loadYaml } from "@/common/utils"
@@ -22,7 +22,7 @@ import { editor } from 'monaco-editor';
 import Close from "@mui/icons-material/Close"
 import { Editor } from "@monaco-editor/react"
 import { primaryColor } from "@/app/style"
-import { TableHeadCell } from "../common"
+import { ResourceTable, TableBodyCell } from "../common"
 
 export default function Pipeline() {
   const intl = useIntl()
@@ -145,7 +145,7 @@ export default function Pipeline() {
     },
   ]
 
-  const header = [
+  const headers = [
     { text: intl.formatMessage({ id: 'app.general.name' }), style: { width: "350px" } },
     { text: intl.formatMessage({ id: 'app.pipeline.tags' }), style: { width: "200px" } },
     { text: intl.formatMessage({ id: 'app.pipeline.resilience' }), style: { width: "350px" } },
@@ -153,26 +153,15 @@ export default function Pipeline() {
     { text: intl.formatMessage({ id: 'app.general.actions' }), style: { width: "350px" } },
   ]
   return (
-    <Paper elevation={0} sx={{ width: '100%', overflow: 'hidden', border: "1px solid #EAEBEE" }}>
-      <TableContainer>
-        <Table stickyHeader aria-label="sticky table">
-          <TableHead>
-            <TableRow>
-              {header.map((h, index) => {
-                return <TableHeadCell key={index} text={h.text} style={h.style} />
-              })}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {pipelines.map((pipeline, index) => {
-              const open = getExpandValue(pipeline)
-              return (
-                <TrafficTableRow key={`pipeline-${index}`} pipeline={pipeline} open={open} setOpen={setExpandValue} actions={actions} openViewYaml={openViewYaml} getServers={getServers} />
-              );
-            })}
-          </TableBody>
-        </Table>
-      </TableContainer>
+    <Fragment>
+      <ResourceTable headers={headers}>
+        {pipelines.map((pipeline, index) => {
+          const open = getExpandValue(pipeline)
+          return (
+            <TrafficTableRow key={`pipeline-${index}`} pipeline={pipeline} open={open} setOpen={setExpandValue} actions={actions} openViewYaml={openViewYaml} getServers={getServers} />
+          );
+        })}
+      </ResourceTable>
       {/* edit */}
       <EditPipelineDialog
         open={editPipeline.open}
@@ -186,7 +175,7 @@ export default function Pipeline() {
           }
         ]}
       />
-    </Paper >
+    </Fragment >
   )
 }
 
@@ -306,7 +295,7 @@ function TrafficTableRow(props: TrafficTableRowProps) {
     <React.Fragment>
       <TableRow hover role="checkbox">
         {/* name */}
-        <TableCell>
+        <TableBodyCell>
           <Stack direction="row" spacing={1} alignItems="center">
             <IconButton size="small" onClick={showDetails}>
               {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
@@ -315,15 +304,15 @@ function TrafficTableRow(props: TrafficTableRowProps) {
               <Typography fontSize={16} style={{ color: primaryColor }}>{pipeline.name}</Typography>
             </ButtonBase>
           </Stack>
-        </TableCell>
+        </TableBodyCell>
 
         {/* tags */}
-        <TableCell>
+        <TableBodyCell>
           <Chip label="Filter" avatar={<Avatar>{pipeline.filters.length}</Avatar>} />
-        </TableCell>
+        </TableBodyCell>
 
         {/* resilience */}
-        <TableCell>
+        <TableBodyCell>
           {pipeline.resilience ?
             <Stack
               direction="column"
@@ -340,10 +329,10 @@ function TrafficTableRow(props: TrafficTableRowProps) {
             </Stack> :
             <ChipNone />
           }
-        </TableCell>
+        </TableBodyCell>
 
         {/* used by */}
-        <TableCell>
+        <TableBodyCell>
           {servers.length > 0 ?
             <div>
               <Stack
@@ -368,10 +357,10 @@ function TrafficTableRow(props: TrafficTableRowProps) {
             </div> :
             <div>None</div>
           }
-        </TableCell>
+        </TableBodyCell>
 
         {/* actions */}
-        <TableCell>
+        <TableBodyCell>
           <Stack
             direction="row"
             justifyContent="space-between"
@@ -386,10 +375,10 @@ function TrafficTableRow(props: TrafficTableRowProps) {
               />
             })}
           </Stack>
-        </TableCell>
+        </TableBodyCell>
       </TableRow>
       <TableRow>
-        <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={100}>
+        <TableBodyCell style={{ borderTop: "none", paddingBottom: 0, paddingTop: 0 }} other={{ colSpan: 100 }}>
           <Collapse in={open} timeout="auto" unmountOnExit>
             <Box sx={{ marginTop: 2, marginLeft: 4 }}>
               <React.Fragment>
@@ -408,7 +397,7 @@ function TrafficTableRow(props: TrafficTableRowProps) {
               </React.Fragment>
             </Box>
           </Collapse>
-        </TableCell>
+        </TableBodyCell>
       </TableRow>
     </React.Fragment >
   )
@@ -437,46 +426,32 @@ function PipelineFilterTable(props: PipelineFilterTableProps) {
   }
   const flow = getFlow(pipeline)
 
-  const tableHeads = [
-    intl.formatMessage({ id: 'app.general.name' }),
-    intl.formatMessage({ id: 'app.general.kind' }),
-    intl.formatMessage({ id: 'app.pipeline.alias' }),
-    intl.formatMessage({ id: 'app.pipeline.jumpIf' }),
-    intl.formatMessage({ id: 'app.general.actions' }),
+  const headers = [
+    { text: intl.formatMessage({ id: 'app.general.name' }) },
+    { text: intl.formatMessage({ id: 'app.general.kind' }) },
+    { text: intl.formatMessage({ id: 'app.pipeline.alias' }) },
+    { text: intl.formatMessage({ id: 'app.pipeline.jumpIf' }) },
+    { text: intl.formatMessage({ id: 'app.general.actions' }) },
   ]
-
   return (
-    <Table size="small" sx={{ width: "1000px" }}>
-      <TableHead>
-        <TableRow>
-          {tableHeads.map((head, index) => {
-            return (
-              <TableHeadCell key={index} text={head} />
-            )
-          })}
+    <ResourceTable headers={headers}>
+      {flow.map((f, index) => {
+        const filter = pipeline.filters.find(filter => filter.name === f.filter)
+        let jumpIf = ""
+        _.map(f.jumpIf, (value, key) => {
+          jumpIf += `${key} -> ${value}\n`
+        })
+        return <TableRow key={index}>
+          <TableBodyCell>{f.filter || "not found"}</TableBodyCell>
+          <TableBodyCell>{filter?.kind || "builtin"}</TableBodyCell>
+          <TableBodyCell>{f.alias || <ChipNone />}</TableBodyCell>
+          <TableBodyCell><pre>{jumpIf === "" ? <ChipNone /> : jumpIf}</pre></TableBodyCell>
+          <TableBodyCell>
+            <TextButton title={intl.formatMessage({ id: "app.general.actions.view" })} onClick={() => { onViewYaml(yaml.dump(filter) || "") }} />
+          </TableBodyCell>
         </TableRow>
-      </TableHead>
-      <TableBody>
-        <React.Fragment>
-          {flow.map((f, index) => {
-            const filter = pipeline.filters.find(filter => filter.name === f.filter)
-            let jumpIf = ""
-            _.map(f.jumpIf, (value, key) => {
-              jumpIf += `${key} -> ${value}\n`
-            })
-            return <TableRow key={index}>
-              <TableCell>{f.filter || "not found"}</TableCell>
-              <TableCell>{filter?.kind || "builtin"}</TableCell>
-              <TableCell>{f.alias || <ChipNone />}</TableCell>
-              <TableCell><pre>{jumpIf === "" ? <ChipNone /> : jumpIf}</pre></TableCell>
-              <TableCell>
-                <TextButton title={intl.formatMessage({ id: "app.general.actions.view" })} onClick={() => { onViewYaml(yaml.dump(filter) || "") }} />
-              </TableCell>
-            </TableRow>
-          })}
-        </React.Fragment>
-      </TableBody>
-    </Table >
+      })}
+    </ResourceTable>
   )
 }
 

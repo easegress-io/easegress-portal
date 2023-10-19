@@ -2,10 +2,10 @@ import { grpcserver, pipeline } from "@/apis/object"
 import TextButton from "@/components/TextButton"
 import { Chip, Stack, Table, TableBody, TableCell, TableHead, TableRow, Tooltip } from "@mui/material"
 import _ from 'lodash'
-import React from "react"
+import React, { Fragment } from "react"
 import { useIntl } from "react-intl"
 import yaml from 'js-yaml'
-import { TableHeadCell } from "../common"
+import { ResourceTable, TableBodyCell } from "../common"
 
 export function getGRPCTableData(server: grpcserver.GRPCServer) {
   const hosts: string[] = []
@@ -35,114 +35,102 @@ export function GRPCServerRuleTable(props: GRPCServerRuleTableProps) {
   const { onViewYaml, getPipeline } = props
   const allRuleData = getAllGRPCServerRuleData(props.server)
 
-  const tableHeads = [
-    intl.formatMessage({ id: 'app.traffic.host' }),
-    intl.formatMessage({ id: 'app.traffic.method' }),
-    intl.formatMessage({ id: 'app.traffic.ipFilter' }),
-    intl.formatMessage({ id: 'app.traffic.headers' }),
-    intl.formatMessage({ id: 'app.traffic.pipeline' }),
-    intl.formatMessage({ id: 'app.general.actions' }),
+  const headers = [
+    { text: intl.formatMessage({ id: 'app.traffic.host' }) },
+    { text: intl.formatMessage({ id: 'app.traffic.method' }) },
+    { text: intl.formatMessage({ id: 'app.traffic.ipFilter' }) },
+    { text: intl.formatMessage({ id: 'app.traffic.headers' }) },
+    { text: intl.formatMessage({ id: 'app.traffic.pipeline' }) },
+    { text: intl.formatMessage({ id: 'app.general.actions' }) },
   ]
-
   return (
-    <Table size="small">
-      <TableHead>
-        <TableRow>
-          {tableHeads.map((head, index) => {
-            return (
-              <TableHeadCell key={index} text={head} />
-            )
-          })}
-        </TableRow>
-      </TableHead>
-      <TableBody>
-        {allRuleData.map((data, index) => {
-          const pipeline = getPipeline(data.pipeline)
+    <ResourceTable headers={headers}>
+      {allRuleData.map((data, index) => {
+        const pipeline = getPipeline(data.pipeline)
 
-          return (
-            <TableRow key={index}>
-              {/* host */}
-              <TableCell>
-                {data.sameHost ? <Chip size="small" label={intl.formatMessage({ id: "app.traffic.host.sameAsAbove" })} /> :
-                  <React.Fragment>
-                    {data.hosts.map((host, index) => {
-                      return <div key={`host-${index}`}>{host}</div>
-                    })}
-                    {data.hostRegexps.map((host, index) => {
-                      return <div key={`hostRegexp-${index}`}>{host} <Chip size="small" label={"regexp"} /></div>
-                    })}
-                    {data.hosts.length === 0 && data.hostRegexps.length === 0 && <div>*</div>}
-                  </React.Fragment>
-                }
-              </TableCell>
+        return (
+          <TableRow key={index}>
+            {/* host */}
+            <TableBodyCell>
+              {data.sameHost ? <Chip size="small" label={intl.formatMessage({ id: "app.traffic.host.sameAsAbove" })} /> :
+                <React.Fragment>
+                  {data.hosts.map((host, index) => {
+                    return <div key={`host-${index}`}>{host}</div>
+                  })}
+                  {data.hostRegexps.map((host, index) => {
+                    return <div key={`hostRegexp-${index}`}>{host} <Chip size="small" label={"regexp"} /></div>
+                  })}
+                  {data.hosts.length === 0 && data.hostRegexps.length === 0 && <div>*</div>}
+                </React.Fragment>
+              }
+            </TableBodyCell>
 
 
-              {/* path */}
-              <TableCell>
-                {(data.method.length > 0) && <div>{data.method}</div>}
-                {(data.methodPrefix.length > 0) && <div>{data.methodPrefix} <Chip size="small" label="prefix" /></div>}
-                {(data.methodRegexp.length > 0) && <div>{data.methodRegexp} <Chip size="small" label="regexp" /></div>}
-              </TableCell>
+            {/* path */}
+            <TableBodyCell>
+              {(data.method.length > 0) && <div>{data.method}</div>}
+              {(data.methodPrefix.length > 0) && <div>{data.methodPrefix} <Chip size="small" label="prefix" /></div>}
+              {(data.methodRegexp.length > 0) && <div>{data.methodRegexp} <Chip size="small" label="regexp" /></div>}
+            </TableBodyCell>
 
-              {/* ipFilter */}
-              <TableCell>
-                {data.ipFilter ?
+            {/* ipFilter */}
+            <TableBodyCell>
+              {data.ipFilter ?
+                <Stack
+                  direction="row"
+                  justifyContent="flex-start"
+                  alignItems="center"
+                  spacing={1}
+                >
                   <Stack
-                    direction="row"
-                    justifyContent="flex-start"
-                    alignItems="center"
-                    spacing={1}
+                    direction="column"
+                    justifyContent="center"
+                    alignItems="flex-start"
+                    spacing={0}
                   >
-                    <Stack
-                      direction="column"
-                      justifyContent="center"
-                      alignItems="flex-start"
-                      spacing={0}
-                    >
-                      <div>allow {data.ipFilter.allowIPs ? data.ipFilter.allowIPs.length : 0}</div>
-                      <div>block {data.ipFilter.blockIPs ? data.ipFilter.blockIPs.length : 0}</div>
-                    </Stack>
-                    <TextButton title={intl.formatMessage({ id: "app.general.actions.view" })} onClick={() => { onViewYaml(yaml.dump(data.ipFilter)) }} />
-                  </Stack> :
-                  <div>Disabled</div>
-                }
-              </TableCell>
+                    <div>allow {data.ipFilter.allowIPs ? data.ipFilter.allowIPs.length : 0}</div>
+                    <div>block {data.ipFilter.blockIPs ? data.ipFilter.blockIPs.length : 0}</div>
+                  </Stack>
+                  <TextButton title={intl.formatMessage({ id: "app.general.actions.view" })} onClick={() => { onViewYaml(yaml.dump(data.ipFilter)) }} />
+                </Stack> :
+                <div>Disabled</div>
+              }
+            </TableBodyCell>
 
-              {/* headers */}
-              <TableCell>
-                {data.headers ?
-                  <Stack
-                    direction="row"
-                    justifyContent="flex-start"
-                    alignItems="center"
-                    spacing={1}
-                  >
-                    <div>{data.headers.length}</div>
-                    <TextButton title={intl.formatMessage({ id: "app.general.actions.view" })} onClick={() => { onViewYaml(yaml.dump(data.headers)) }} />
-                  </Stack> :
-                  <div>-</div>}
-              </TableCell>
+            {/* headers */}
+            <TableBodyCell>
+              {data.headers ?
+                <Stack
+                  direction="row"
+                  justifyContent="flex-start"
+                  alignItems="center"
+                  spacing={1}
+                >
+                  <div>{data.headers.length}</div>
+                  <TextButton title={intl.formatMessage({ id: "app.general.actions.view" })} onClick={() => { onViewYaml(yaml.dump(data.headers)) }} />
+                </Stack> :
+                <div>-</div>}
+            </TableBodyCell>
 
-              {/* pipeline */}
-              <TableCell>
-                {pipeline ?
-                  <TextButton title={pipeline.name} onClick={() => { onViewYaml(yaml.dump(pipeline)) }} /> :
-                  <Tooltip title={intl.formatMessage({ id: "app.general.noResult" })}>
-                    <div>{data.pipeline}</div>
-                  </Tooltip>
-                }
-              </TableCell>
+            {/* pipeline */}
+            <TableBodyCell>
+              {pipeline ?
+                <TextButton title={pipeline.name} onClick={() => { onViewYaml(yaml.dump(pipeline)) }} /> :
+                <Tooltip title={intl.formatMessage({ id: "app.general.noResult" })}>
+                  <div>{data.pipeline}</div>
+                </Tooltip>
+              }
+            </TableBodyCell>
 
-              {/* actions */}
-              <TableCell>
-                <TextButton title={intl.formatMessage({ id: "app.general.actions.view" })} onClick={() => { onViewYaml(yaml.dump(data.rule)) }} />
-              </TableCell>
+            {/* actions */}
+            <TableBodyCell>
+              <TextButton title={intl.formatMessage({ id: "app.general.actions.view" })} onClick={() => { onViewYaml(yaml.dump(data.rule)) }} />
+            </TableBodyCell>
 
-            </TableRow>
-          )
-        })}
-      </TableBody>
-    </Table >
+          </TableRow>
+        )
+      })}
+    </ResourceTable>
   )
 }
 

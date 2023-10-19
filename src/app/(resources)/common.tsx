@@ -1,12 +1,48 @@
 import TextTypo from "@/components/TextTypo";
-import { TableCell } from "@mui/material";
+import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material";
 
-export type TableHeadCellProps = {
+type ResourceTableProps = {
+  headers: {
+    text: string
+    style?: React.CSSProperties
+  }[]
+  children: React.ReactNode
+}
+
+export function ResourceTable(props: ResourceTableProps) {
+  const { headers, children } = props
+
+  return (
+    <Paper elevation={0}
+      sx={{
+        width: '100%',
+        overflow: 'hidden',
+        border: "1px solid #EAEBEE",
+        boxShadow: "none",
+      }}
+    >
+      <Table stickyHeader>
+        <TableHead>
+          <TableRow>
+            {headers.map((h, index) => {
+              return <TableHeadCell key={index} text={h.text} style={h.style} />
+            })}
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {children}
+        </TableBody>
+      </Table>
+    </Paper >
+  )
+}
+
+type TableHeadCellProps = {
   text: string
   style?: React.CSSProperties
 }
 
-export function TableHeadCell({ text, style }: TableHeadCellProps) {
+function TableHeadCell({ text, style }: TableHeadCellProps) {
   return (
     <TableCell
       style={{
@@ -21,6 +57,30 @@ export function TableHeadCell({ text, style }: TableHeadCellProps) {
         fontWeight="600"
         lineHeight="18px"
       />
+    </TableCell>
+  )
+}
+
+export type TableBodyCellProps = {
+  children: React.ReactNode
+  style?: React.CSSProperties
+  other?: {
+    [key: string]: any
+  }
+}
+
+export function TableBodyCell(props: TableBodyCellProps) {
+  const { children, style, other } = props
+  return (
+    <TableCell
+      style={{
+        borderTop: "1px solid #EAEBEE",
+        borderBottom: "none",
+        ...style
+      }}
+      {...other}
+    >
+      {children}
     </TableCell>
   )
 }

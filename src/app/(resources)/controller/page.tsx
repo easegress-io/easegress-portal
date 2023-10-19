@@ -2,9 +2,9 @@
 
 import { useObjects } from "@/apis/hooks"
 import { useClusters } from "@/app/context"
-import React from "react"
+import React, { Fragment } from "react"
 import { EGObject, getObjectStatus, updateObject } from "@/apis/object"
-import { Box, Chip, CircularProgress, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material"
+import { Box, Chip, CircularProgress, Paper, Stack, Table, TableBody, TableContainer, TableHead, TableRow } from "@mui/material"
 import { useIntl } from "react-intl"
 import YamlEditorDialog from "@/components/YamlEditorDialog"
 import { useSnackbar } from "notistack"
@@ -17,7 +17,7 @@ import yaml from "js-yaml"
 import { useResourcesContext } from "../context"
 import { useEditResource } from "../hooks"
 import { primaryColor } from "@/app/style"
-import { TableHeadCell } from "../common"
+import { ResourceTable, TableBodyCell } from "../common"
 
 export default function Controller() {
   const { currentCluster } = useClusters()
@@ -104,32 +104,20 @@ export default function Controller() {
     },
   ]
 
-  const header = [
+  const headers = [
     { text: intl.formatMessage({ id: 'app.general.name' }), style: { width: "350px" } },
     { text: intl.formatMessage({ id: 'app.general.kind' }), style: { flex: 1 } },
     { text: intl.formatMessage({ id: 'app.general.actions' }), style: { width: "350px" } },
   ]
   return (
-    <Paper elevation={0} sx={{ width: '100%', overflow: 'hidden', border: "1px solid #EAEBEE" }}>
-      <TableContainer>
-        <Table stickyHeader aria-label="sticky table">
-          <TableHead>
-            <TableRow>
-              {header.map((h, index) => {
-                return <TableHeadCell key={index} text={h.text} style={h.style} />
-              })}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {controllers.map((controller, index) => {
-              return (
-                <ControllerTableRow key={index} controller={controller} actions={actions} openViewYaml={openViewYaml} />
-              );
-            })}
-          </TableBody>
-        </Table>
-      </TableContainer>
-      {/* edit */}
+    <Fragment>
+      <ResourceTable headers={headers}>
+        {controllers.map((controller, index) => {
+          return (
+            <ControllerTableRow key={index} controller={controller} actions={actions} openViewYaml={openViewYaml} />
+          );
+        })}
+      </ResourceTable>
       <YamlEditorDialog
         open={editController.open}
         onClose={editController.onClose}
@@ -143,7 +131,7 @@ export default function Controller() {
           }
         ]}
       />
-    </Paper >
+    </Fragment>
   )
 }
 
@@ -177,14 +165,14 @@ function ControllerTableRow(props: ControllerTableRowProps) {
     <React.Fragment>
       <TableRow hover role="checkbox">
         {/* name */}
-        <TableCell>{data.name}</TableCell>
+        <TableBodyCell>{data.name}</TableBodyCell>
         {/* kind */}
-        <TableCell>
+        <TableBodyCell>
           <Chip label={data.kind} style={{ color: primaryColor }} variant="outlined" size="small" />
-        </TableCell>
+        </TableBodyCell>
 
         {/* actions */}
-        <TableCell>
+        <TableBodyCell style={{ borderBottom: "none" }}>
           <Stack
             direction="row"
             justifyContent="space-between"
@@ -199,7 +187,7 @@ function ControllerTableRow(props: ControllerTableRowProps) {
               />
             })}
           </Stack>
-        </TableCell>
+        </TableBodyCell>
       </TableRow>
     </React.Fragment >
   )

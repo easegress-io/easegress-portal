@@ -2,7 +2,7 @@
 
 import { useObjects } from "@/apis/hooks"
 import { useClusters } from "@/app/context"
-import React from "react"
+import React, { Fragment } from "react"
 import { EGObject, getObjectStatus, grpcserver, httpserver, pipeline, updateObject } from "@/apis/object"
 import { Box, ButtonBase, Chip, CircularProgress, Collapse, IconButton, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material"
 import { useIntl } from "react-intl"
@@ -22,7 +22,7 @@ import { HTTPServerRuleTable, getHTTPTableData } from "./http"
 import { GRPCServerRuleTable, getGRPCTableData } from "./grpc"
 import { useEditResource } from "../hooks"
 import { primaryColor } from "@/app/style"
-import { TableHeadCell } from "../common"
+import { ResourceTable, TableBodyCell } from "../common"
 
 export default function Traffic() {
   const intl = useIntl()
@@ -136,39 +136,28 @@ export default function Traffic() {
     },
   ]
 
-  const header = [
+  const headers = [
     { text: intl.formatMessage({ id: 'app.general.name' }), style: { width: "350px" } },
     { text: intl.formatMessage({ id: 'app.traffic.host' }), style: { flex: 1 } },
     { text: intl.formatMessage({ id: 'app.traffic.port' }), style: { width: "150px" } },
     { text: intl.formatMessage({ id: 'app.general.actions' }), style: { width: "350px" } },
   ]
   return (
-    <Paper elevation={0} sx={{ width: '100%', overflow: 'hidden', border: "1px solid #EAEBEE" }}>
-      <TableContainer>
-        <Table stickyHeader aria-label="sticky table">
-          <TableHead>
-            <TableRow>
-              {header.map((h, index) => {
-                return <TableHeadCell key={index} text={h.text} style={h.style} />
-              })}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {httpServers.map((server, index) => {
-              const open = getExpandValue(server)
-              return (
-                <TrafficTableRow key={`http-${index}`} server={server} open={open} setOpen={setExpandValue} actions={actions} openViewYaml={openViewYaml} getPipeline={getPipeline} />
-              );
-            })}
-            {grpcServers.map((server, index) => {
-              const open = getExpandValue(server)
-              return (
-                <TrafficTableRow key={`grpc-${index}`} server={server} open={open} setOpen={setExpandValue} actions={actions} openViewYaml={openViewYaml} getPipeline={getPipeline} />
-              );
-            })}
-          </TableBody>
-        </Table>
-      </TableContainer>
+    <Fragment>
+      <ResourceTable headers={headers}>
+        {httpServers.map((server, index) => {
+          const open = getExpandValue(server)
+          return (
+            <TrafficTableRow key={`http-${index}`} server={server} open={open} setOpen={setExpandValue} actions={actions} openViewYaml={openViewYaml} getPipeline={getPipeline} />
+          );
+        })}
+        {grpcServers.map((server, index) => {
+          const open = getExpandValue(server)
+          return (
+            <TrafficTableRow key={`grpc-${index}`} server={server} open={open} setOpen={setExpandValue} actions={actions} openViewYaml={openViewYaml} getPipeline={getPipeline} />
+          );
+        })}
+      </ResourceTable>
       {/* edit */}
       <YamlEditorDialog
         open={editServer.open}
@@ -183,7 +172,7 @@ export default function Traffic() {
           }
         ]}
       />
-    </Paper >
+    </Fragment >
   )
 }
 
@@ -223,7 +212,7 @@ function TrafficTableRow(props: TrafficTableRowProps) {
     <React.Fragment>
       <TableRow hover role="checkbox">
         {/* name */}
-        <TableCell>
+        <TableBodyCell>
           <Stack direction="row" spacing={1} alignItems="center">
             <IconButton size="small" onClick={showDetails}>
               {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
@@ -233,10 +222,10 @@ function TrafficTableRow(props: TrafficTableRowProps) {
             </ButtonBase>
             <Chip label={getKindChipLabel(data.kind)} style={{ color: primaryColor }} variant="outlined" size="small" />
           </Stack>
-        </TableCell>
+        </TableBodyCell>
 
         {/* host */}
-        <TableCell>
+        <TableBodyCell>
           {data.hosts.map((host, index) => {
             return <div key={`host-${index}`}>{host}</div>
           })}
@@ -244,13 +233,13 @@ function TrafficTableRow(props: TrafficTableRowProps) {
             return <div key={`hostRegexp-${index}`}>{host} <Chip size="small" label={"regexp"} /></div>
           })}
           {data.hosts.length === 0 && data.hostRegexps.length === 0 && <div>*</div>}
-        </TableCell>
+        </TableBodyCell>
 
         {/* port */}
-        <TableCell>{data.port}</TableCell>
+        <TableBodyCell>{data.port}</TableBodyCell>
 
         {/* actions */}
-        <TableCell>
+        <TableBodyCell>
           <Stack
             direction="row"
             justifyContent="space-between"
@@ -265,10 +254,10 @@ function TrafficTableRow(props: TrafficTableRowProps) {
               />
             })}
           </Stack>
-        </TableCell>
+        </TableBodyCell>
       </TableRow>
       <TableRow>
-        <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={100}>
+        <TableBodyCell style={{ border: "none", paddingBottom: 0, paddingTop: 0 }} other={{ colSpan: 100 }}>
           <Collapse in={open} timeout="auto" unmountOnExit>
             <Box sx={{ margin: 1 }}>
               {server.kind === "HTTPServer" ?
@@ -287,7 +276,7 @@ function TrafficTableRow(props: TrafficTableRowProps) {
               }
             </Box>
           </Collapse>
-        </TableCell>
+        </TableBodyCell>
       </TableRow>
     </React.Fragment >
   )
