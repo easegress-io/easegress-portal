@@ -12,6 +12,7 @@ import Paginations, { usePagination } from "@/components/Paginations"
 import { useLogs } from "@/apis/hooks"
 import ErrorAlert from "@/components/ErrorAlert"
 import BlankPage from "@/components/BlankPage"
+import { borderValue } from "@/app/style"
 
 export default function Logs() {
   const intl = useIntl()
@@ -98,7 +99,7 @@ function LogContent(props: LogContentProps) {
     <Fragment>
       <List
         style={{
-          border: "1px solid #EAEBEE",
+          border: borderValue,
           borderRadius: "4px",
         }}
       >

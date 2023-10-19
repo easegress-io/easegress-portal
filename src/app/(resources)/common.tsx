@@ -1,5 +1,6 @@
 import TextTypo from "@/components/TextTypo";
 import { Paper, Table, TableBody, TableCell, TableHead, TableRow } from "@mui/material";
+import { borderValue, primaryColor } from "../style";
 
 type ResourceTableProps = {
   headers: {
@@ -17,7 +18,7 @@ export function ResourceTable(props: ResourceTableProps) {
       sx={{
         width: '100%',
         overflow: 'hidden',
-        border: "1px solid #EAEBEE",
+        border: borderValue,
         boxShadow: "none",
       }}
     >
@@ -74,7 +75,7 @@ export function TableBodyCell(props: TableBodyCellProps) {
   return (
     <TableCell
       style={{
-        borderTop: "1px solid #EAEBEE",
+        borderTop: borderValue,
         borderBottom: "none",
         ...style
       }}
@@ -82,5 +83,32 @@ export function TableBodyCell(props: TableBodyCellProps) {
     >
       {children}
     </TableCell>
+  )
+}
+
+export type TableBodyRowProps = {
+  children: React.ReactNode
+  highlight?: boolean
+  style?: React.CSSProperties
+  other?: {
+    [key: string]: any
+  }
+}
+
+export function TableBodyRow(props: TableBodyRowProps) {
+  const { children, style, other } = props
+  return (
+    <TableRow
+      hover
+      role="checkbox"
+      style={{
+        backgroundColor: props.highlight ? "#DCEEFB" : undefined,
+        transition: 'background-color 3s',
+        ...style
+      }}
+      {...other}
+    >
+      {children}
+    </TableRow>
   )
 }

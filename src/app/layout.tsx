@@ -71,6 +71,10 @@ export default function RootLayout({ children, }: { children: React.ReactNode })
                 Components={{
                   error: StyledMaterialDesignContent,
                 }}
+                anchorOrigin={{
+                  vertical: 'top',
+                  horizontal: 'center',
+                }}
                 maxSnack={3}
                 autoHideDuration={5000}
               >

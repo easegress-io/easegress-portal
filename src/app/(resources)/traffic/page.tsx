@@ -21,8 +21,8 @@ import { TableData } from "./types"
 import { HTTPServerRuleTable, getHTTPTableData } from "./http"
 import { GRPCServerRuleTable, getGRPCTableData } from "./grpc"
 import { useEditResource } from "../hooks"
-import { primaryColor } from "@/app/style"
-import { ResourceTable, TableBodyCell } from "../common"
+import { borderValue, primaryColor } from "@/app/style"
+import { ResourceTable, TableBodyCell, TableBodyRow } from "../common"
 
 export default function Traffic() {
   const intl = useIntl()
@@ -198,6 +198,7 @@ type TrafficTableRowProps = {
 
 function TrafficTableRow(props: TrafficTableRowProps) {
   const intl = useIntl()
+  const { lastCreatedResource } = useResourcesContext()
   const { server, open, setOpen, actions, openViewYaml, getPipeline } = props
   const data = getTableData(server)
   const showDetails = () => { setOpen(server, !open) }
@@ -210,7 +211,7 @@ function TrafficTableRow(props: TrafficTableRowProps) {
 
   return (
     <React.Fragment>
-      <TableRow hover role="checkbox">
+      <TableBodyRow highlight={lastCreatedResource.name === server.name}>
         {/* name */}
         <TableBodyCell>
           <Stack direction="row" spacing={1} alignItems="center">
@@ -255,9 +256,9 @@ function TrafficTableRow(props: TrafficTableRowProps) {
             })}
           </Stack>
         </TableBodyCell>
-      </TableRow>
+      </TableBodyRow>
       <TableRow>
-        <TableBodyCell style={{ border: "none", paddingBottom: 0, paddingTop: 0 }} other={{ colSpan: 100 }}>
+        <TableBodyCell style={{ borderTop: open ? borderValue : "none", paddingBottom: 0, paddingTop: 0 }} other={{ colSpan: 100 }}>
           <Collapse in={open} timeout="auto" unmountOnExit>
             <Box sx={{ margin: 1 }}>
               {server.kind === "HTTPServer" ?

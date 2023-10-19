@@ -14,6 +14,7 @@ type ResourceContext = {
         resource: EGObject
     }
     setDeleteResource: ({ open, resource }: { open: boolean, resource: EGObject }) => void
+    lastCreatedResource: EGObject
 }
 
 export const ResourceContext = React.createContext<ResourceContext>({
@@ -29,10 +30,11 @@ export const ResourceContext = React.createContext<ResourceContext>({
         resource: {} as EGObject,
     },
     setDeleteResource: () => { },
+    lastCreatedResource: {} as EGObject,
 })
 
 export const useResourcesContext = () => {
-    const { search, setSearch, setViewYaml, setDeleteResource } = React.useContext(ResourceContext)
+    const { search, setSearch, setViewYaml, setDeleteResource, lastCreatedResource } = React.useContext(ResourceContext)
     const openViewYaml = (yaml: string) => {
         setViewYaml({ open: true, yaml })
     }
@@ -44,5 +46,6 @@ export const useResourcesContext = () => {
         setSearch,
         openViewYaml,
         openDeleteResource,
+        lastCreatedResource,
     }
 }

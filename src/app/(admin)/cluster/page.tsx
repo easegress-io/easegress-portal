@@ -24,7 +24,7 @@ import { useRouter } from "next/navigation"
 import YamlViewer from "@/components/YamlViewer"
 import EditIcon from '@mui/icons-material/Edit';
 import { SearchBarLayout } from "@/components/SearchBar";
-import { primaryColor } from "@/app/style";
+import { borderValue, primaryColor } from "@/app/style";
 
 export default function Clusters() {
   const { clusters } = useClusters()
@@ -72,7 +72,7 @@ function SingleCluster({ cluster }: { cluster: ClusterType }) {
     <Card
       elevation={0}
       style={{
-        border: "1px solid #EAEBEE",
+        border: borderValue,
       }}
     >
       <CardHeader

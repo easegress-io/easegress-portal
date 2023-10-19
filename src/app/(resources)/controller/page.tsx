@@ -17,7 +17,7 @@ import yaml from "js-yaml"
 import { useResourcesContext } from "../context"
 import { useEditResource } from "../hooks"
 import { primaryColor } from "@/app/style"
-import { ResourceTable, TableBodyCell } from "../common"
+import { ResourceTable, TableBodyCell, TableBodyRow } from "../common"
 
 export default function Controller() {
   const { currentCluster } = useClusters()
@@ -158,12 +158,13 @@ type ControllerTableRowProps = {
 }
 
 function ControllerTableRow(props: ControllerTableRowProps) {
+  const { lastCreatedResource } = useResourcesContext()
   const { controller: controller, actions } = props
   const data = getTableData(controller)
 
   return (
     <React.Fragment>
-      <TableRow hover role="checkbox">
+      <TableBodyRow highlight={lastCreatedResource.name === controller.name}>
         {/* name */}
         <TableBodyCell>{data.name}</TableBodyCell>
         {/* kind */}
@@ -188,7 +189,7 @@ function ControllerTableRow(props: ControllerTableRowProps) {
             })}
           </Stack>
         </TableBodyCell>
-      </TableRow>
+      </TableBodyRow>
     </React.Fragment >
   )
 }

@@ -21,8 +21,8 @@ import FlowChart from "./FlowChart"
 import { editor } from 'monaco-editor';
 import Close from "@mui/icons-material/Close"
 import { Editor } from "@monaco-editor/react"
-import { primaryColor } from "@/app/style"
-import { ResourceTable, TableBodyCell } from "../common"
+import { borderValue, primaryColor } from "@/app/style"
+import { ResourceTable, TableBodyCell, TableBodyRow } from "../common"
 
 export default function Pipeline() {
   const intl = useIntl()
@@ -158,7 +158,7 @@ export default function Pipeline() {
         {pipelines.map((pipeline, index) => {
           const open = getExpandValue(pipeline)
           return (
-            <TrafficTableRow key={`pipeline-${index}`} pipeline={pipeline} open={open} setOpen={setExpandValue} actions={actions} openViewYaml={openViewYaml} getServers={getServers} />
+            <PipelineTableRow key={`pipeline-${index}`} pipeline={pipeline} open={open} setOpen={setExpandValue} actions={actions} openViewYaml={openViewYaml} getServers={getServers} />
           );
         })}
       </ResourceTable>
@@ -232,7 +232,7 @@ function EditPipelineDialog(props: EditPipelineDialogProps) {
           spacing={2}
         >
           <Editor language="yaml" value={yaml} height={'80vh'} onChange={onYamlChange} options={options} />
-          <FlowChart pipeline={getPipeline()} />
+          <FlowChart idPrefix="edit" pipeline={getPipeline()} />
         </Stack>
       </DialogContent>
       {actions && actions.length > 0 &&
@@ -265,7 +265,7 @@ function EditPipelineDialog(props: EditPipelineDialogProps) {
   )
 }
 
-type TrafficTableRowProps = {
+type PipelineTableRowProps = {
   pipeline: pipeline.Pipeline
   getServers: (pipeline: pipeline.Pipeline) => EGObject[]
   open: boolean
@@ -278,8 +278,9 @@ type TrafficTableRowProps = {
   }[]
 }
 
-function TrafficTableRow(props: TrafficTableRowProps) {
+function PipelineTableRow(props: PipelineTableRowProps) {
   const intl = useIntl()
+  const { lastCreatedResource } = useResourcesContext()
   const { pipeline, open, setOpen, actions, openViewYaml, getServers } = props
   const showDetails = () => { setOpen(pipeline, !open) }
   const servers = getServers(pipeline)
@@ -293,7 +294,7 @@ function TrafficTableRow(props: TrafficTableRowProps) {
 
   return (
     <React.Fragment>
-      <TableRow hover role="checkbox">
+      <TableBodyRow highlight={lastCreatedResource.name === pipeline.name}>
         {/* name */}
         <TableBodyCell>
           <Stack direction="row" spacing={1} alignItems="center">
@@ -376,9 +377,9 @@ function TrafficTableRow(props: TrafficTableRowProps) {
             })}
           </Stack>
         </TableBodyCell>
-      </TableRow>
+      </TableBodyRow>
       <TableRow>
-        <TableBodyCell style={{ borderTop: "none", paddingBottom: 0, paddingTop: 0 }} other={{ colSpan: 100 }}>
+        <TableBodyCell style={{ borderTop: open ? borderValue : "none", paddingBottom: 0, paddingTop: 0 }} other={{ colSpan: 100 }}>
           <Collapse in={open} timeout="auto" unmountOnExit>
             <Box sx={{ marginTop: 2, marginLeft: 4 }}>
               <React.Fragment>

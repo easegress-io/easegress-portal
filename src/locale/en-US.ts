@@ -58,6 +58,9 @@ export const enUS = {
   'app.general.page': 'Page',
   'app.general.pageSize': 'Page Size',
   'app.general.pageJump': 'Jump',
+  'app.general.notification': 'Notification',
+  'app.general.confirm': "Confirm",
+  'app.general.cancel': "Cancel",
 
   'app.general.create': 'Create Resource',
   'app.general.createSuccess': 'Create {kind} {name} success',
@@ -65,7 +68,7 @@ export const enUS = {
 
   'app.general.getStatusFailed': 'Get status of {kind} {name} failed, error: {error}',
 
-  'app.general.deleteConfirm': "Are you sure to delete?",
+  'app.general.deleteConfirm': "Are you sure to delete this?",
   'app.general.deleteSuccess': 'Delete {kind} {name} success',
   'app.general.deleteFailed': 'Delete {kind} {name} failed, error: {error}',
 

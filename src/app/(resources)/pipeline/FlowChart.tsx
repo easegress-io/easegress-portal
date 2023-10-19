@@ -5,10 +5,11 @@ import _ from 'lodash';
 import { Box } from '@mui/material';
 
 export type FlowChartProps = {
+  idPrefix?: string
   pipeline: pipeline.Pipeline | undefined
 }
 
-export default function FlowChart({ pipeline }: FlowChartProps) {
+export default function FlowChart({ idPrefix, pipeline }: FlowChartProps) {
   const [chart, setChart] = React.useState('')
 
   React.useEffect(() => {
@@ -54,7 +55,7 @@ export default function FlowChart({ pipeline }: FlowChartProps) {
   }, [pipeline, setChart]);
 
   return (
-    <MermaidChart id={pipeline?.name} chart={chart} />
+    <MermaidChart id={(idPrefix || "") + pipeline?.name} chart={chart} />
   );
 };
 

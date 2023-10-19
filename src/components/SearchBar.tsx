@@ -5,7 +5,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import ClearIcon from '@mui/icons-material/Clear';
 import Spacer from "@/components/Spacer"
 import React, { Fragment } from "react";
-import { primaryColor } from "@/app/style";
+import { borderValue, primaryColor } from "@/app/style";
 import TextTypo from "./TextTypo";
 
 export type SearchBarProps = {
@@ -69,7 +69,7 @@ export function SearchBarLayout(props: SearchBarLayoutProps) {
                 height: '40px',
                 lineHeight: '40px',
                 textTransform: 'none',
-                border: "1px solid #EAEBEE",
+                border: borderValue,
                 color: primaryColor
               }}
               onClick={button.onClick}
