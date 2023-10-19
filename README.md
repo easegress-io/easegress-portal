@@ -1,4 +1,16 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Easegress Portal
+
+Easegress Portal is an intuitive, open-source user interface for the [Easegress](https://github.com/megaease/easegress) traffic orchestration system. Developed with React.js, this portal provides config management, metrics, and visualizations, enhancing the overall Easegress experience.
+
+## Features
+
+-  **Intuitive User Interface:** Built with React.js—one of the most popular and efficient JavaScript libraries—our portal provides a smooth, user-friendly experience. Navigate, manage, and monitor with ease.
+
+-  **Unified Configuration Management:** Graphical representation of core Easegress concepts ensures intuitive control over configurations and monitoring data. Directly import native Easegress configurations and manage them through a straightforward interface.
+
+-  **Fully Open-Source, Easy Contributions:** We've open-sourced the entire Easegress Portal. Dive into the code, customize according to your needs, and join us in refining and expanding its capabilities. Developed with React.js and best practices, it's convenient for developers to contribute or customize.
+
+-  **Seamless Integration:** The portal integrates directly with the Easegress API without the need for middleware. We also offer a Docker Image for a one-click start-up.
 
 ## Getting Started
 
@@ -20,17 +32,43 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
 
-## Learn More
+## Screenshots
 
-To learn more about Next.js, take a look at the following resources:
+**1. Cluster Management**
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+[](./docs/imgs/cluster.png)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+**2. Traffic Management**
 
-## Deploy on Vercel
+[](./docs/imgs/traffic-list.png)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+[](./docs/imgs/traffic-http-server.png)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+**3. Pipeline Management**
+
+[](./docs/imgs/pipeline-list.png)
+
+[](./docs/imgs/pipeline-detail.png)
+
+[](./docs/imgs/pipeline-edit.png)
+
+**4. Controller Management**
+
+[](./docs/imgs/controller-list.png)
+
+**5. Logs**
+
+[](./docs/imgs/logs.png)
+
+## Community
+
+- [Join Slack Workspace](https://join.slack.com/t/openmegaease/shared_invite/zt-upo7v306-lYPHvVwKnvwlqR0Zl2vveA) for requirement, issue and development.
+- [MegaEase on Twitter](https://twitter.com/megaease)
+
+## Contributing
+
+See [Contributing guide](./CONTRIBUTING.md#contributing).
+
+## License
+
+Easegress is under the Apache 2.0 license. See the [LICENSE](./LICENSE) file for details.
