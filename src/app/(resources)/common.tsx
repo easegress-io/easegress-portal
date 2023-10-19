@@ -1,5 +1,5 @@
 import TextTypo from "@/components/TextTypo";
-import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from "@mui/material";
+import { Paper, Table, TableBody, TableCell, TableHead, TableRow } from "@mui/material";
 
 type ResourceTableProps = {
   headers: {

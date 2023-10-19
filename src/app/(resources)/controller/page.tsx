@@ -4,7 +4,7 @@ import { useObjects } from "@/apis/hooks"
 import { useClusters } from "@/app/context"
 import React, { Fragment } from "react"
 import { EGObject, getObjectStatus, updateObject } from "@/apis/object"
-import { Box, Chip, CircularProgress, Paper, Stack, Table, TableBody, TableContainer, TableHead, TableRow } from "@mui/material"
+import { Box, Chip, CircularProgress, Stack, TableRow } from "@mui/material"
 import { useIntl } from "react-intl"
 import YamlEditorDialog from "@/components/YamlEditorDialog"
 import { useSnackbar } from "notistack"
@@ -158,7 +158,7 @@ type ControllerTableRowProps = {
 }
 
 function ControllerTableRow(props: ControllerTableRowProps) {
-  const { controller: controller, actions, openViewYaml } = props
+  const { controller: controller, actions } = props
   const data = getTableData(controller)
 
   return (

@@ -16,7 +16,7 @@ import { ResourceContext } from './context';
 import YamlViewer from '@/components/YamlViewer';
 import { useDeleteResource } from './hooks';
 import SimpleDialog from '@/components/SimpleDialog';
-import { Box, Card, CardContent, Paper } from '@mui/material';
+import { Box, Card } from '@mui/material';
 
 export default function Layout({ children, }: { children: React.ReactNode }) {
   const intl = useIntl()

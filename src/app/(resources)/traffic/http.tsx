@@ -1,8 +1,8 @@
 import { httpserver, pipeline } from "@/apis/object"
 import TextButton from "@/components/TextButton"
-import { Chip, Stack, Table, TableBody, TableCell, TableHead, TableRow, Tooltip } from "@mui/material"
+import { Chip, Stack, TableRow, Tooltip } from "@mui/material"
 import _ from 'lodash'
-import React, { Fragment } from "react"
+import React from "react"
 import { useIntl } from "react-intl"
 import yaml from 'js-yaml'
 import { ResourceTable, TableBodyCell } from "../common"

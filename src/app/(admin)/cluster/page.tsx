@@ -16,7 +16,7 @@ import { useClusters } from "../../context"
 import { useClusterMembers } from "@/apis/hooks"
 import ErrorAlert from "@/components/ErrorAlert"
 import YamlEditorDialog from "@/components/YamlEditorDialog"
-import { Avatar, Box, Button, Card, CardContent, CardHeader, Chip, CircularProgress, Grid, Paper, Stack, Typography } from "@mui/material"
+import { Avatar, Box, Button, Card, CardContent, CardHeader, Chip, CircularProgress, Grid, Paper, Stack } from "@mui/material"
 import yaml from 'js-yaml'
 import moment from 'moment'
 import Image from 'next/image'
