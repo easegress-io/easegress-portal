@@ -36,29 +36,29 @@ This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-opti
 
 **1. Cluster Management**
 
-[](./docs/imgs/cluster.png)
+![cluster](./docs/imgs/cluster.png)
 
 **2. Traffic Management**
 
-[](./docs/imgs/traffic-list.png)
+![traffic list](./docs/imgs/traffic-list.png)
 
-[](./docs/imgs/traffic-http-server.png)
+![traffic http server](./docs/imgs/traffic-http-server.png)
 
 **3. Pipeline Management**
 
-[](./docs/imgs/pipeline-list.png)
+![pipeline list](./docs/imgs/pipeline-list.png)
 
-[](./docs/imgs/pipeline-detail.png)
+![pipeline detail](./docs/imgs/pipeline-detail.png)
 
-[](./docs/imgs/pipeline-edit.png)
+![pipeline edit](./docs/imgs/pipeline-edit.png)
 
 **4. Controller Management**
 
-[](./docs/imgs/controller-list.png)
+![controller list](./docs/imgs/controller-list.png)
 
 **5. Logs**
 
-[](./docs/imgs/logs.png)
+![logs](./docs/imgs/logs.png)
 
 ## Community
 
