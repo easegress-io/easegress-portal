@@ -39,7 +39,7 @@ export default function FlowChart({ idPrefix, pipeline }: FlowChartProps) {
     if (flow.length === 0) {
       flow = pipeline.filters?.map(f => {
         return {
-          filter: f.name,
+          filter: f?.name || "typing...",
           alias: "",
           jumpIf: {},
           namespace: "",
