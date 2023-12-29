@@ -26,6 +26,16 @@ export type FlowChartProps = {
   pipeline: pipeline.Pipeline | undefined
 }
 
+// ChartNode is a node in the flow chart.
+// node in flow can have same name, so we use "id" to distinguish them.
+// "name" also should contains namespace if it has.
+export type ChartNode = {
+  node: pipeline.FlowNode
+  index: number
+  id: string
+  name: string
+}
+
 export default function FlowChart({ idPrefix, pipeline }: FlowChartProps) {
   const [chart, setChart] = React.useState('')
 
@@ -47,18 +57,59 @@ export default function FlowChart({ idPrefix, pipeline }: FlowChartProps) {
       })
     }
 
-    let mermaidText = 'graph TB;\n';
+    let usedIds = new Map<string, number>()
+    // getIDName returns id and name for a flow item.
+    const getIDName = (flowItem: pipeline.FlowNode, index: number) => {
+      let name = flowItem?.alias || flowItem?.filter || `typing-filter-${index}...`
+      if (name === "END") {
+        return {
+          id: name,
+          name,
+        }
+      }
+
+      // to make sure jumpIf works. id should be same of name only if it is duplicated.
+      let id = name
+      if (usedIds.has(id)) {
+        let count = usedIds.get(name) || 0
+        count++
+        usedIds.set(name, count)
+        id = `${name}-${count}`
+      } else {
+        usedIds.set(name, 1)
+      }
+
+      if (flowItem?.namespace) {
+        return {
+          id: id,
+          name: `${flowItem.namespace}/${name}`
+        }
+      }
+      return {
+        id: id,
+        name: name
+      }
+    }
+
+    let chartFlow = flow.map((flowItem, index) => {
+      let res: ChartNode = {
+        node: flowItem,
+        index: index,
+        ...getIDName(flowItem, index)
+      }
+      return res
+    })
 
     let lastIsEnd = false
-    mermaidText += 'START((START))';
-    flow && flow.length && flow.forEach(
-      (flowItem, index) => {
-        const name = flowItem?.alias || flowItem?.filter || `typing-filter-${index}...`
-        if (name === "END") {
+    let mermaidText = 'graph TB;\nSTART((START))';
+    chartFlow && chartFlow.length && chartFlow.forEach(
+      (item) => {
+        if (item.name === "END" && !lastIsEnd) {
           lastIsEnd = true
           mermaidText += '==>END((END));\n';
           return
         }
+        const name = `${item.id}(${item.name})`
         if (lastIsEnd) {
           mermaidText += `${name}`
           lastIsEnd = false
@@ -70,17 +121,17 @@ export default function FlowChart({ idPrefix, pipeline }: FlowChartProps) {
     if (!lastIsEnd) {
       mermaidText += '==>END((END));\n';
     }
-    console.log(mermaidText)
 
-    flow && flow.length && flow
-      .filter((flowItem) => !_.isEmpty(flowItem?.jumpIf))
-      .forEach((flowItem) => {
+    chartFlow && chartFlow.length && chartFlow
+      .filter((chartNode) => !_.isEmpty(chartNode?.node?.jumpIf))
+      .forEach((chartNode) => {
+        let flowItem = chartNode.node;
         Object.keys(flowItem.jumpIf).forEach((jumpIfKey) => {
           let jumpIfValue = flowItem?.jumpIf?.[jumpIfKey];
           if (!_.isEmpty(jumpIfKey)) {
-            mermaidText += `${flowItem?.alias ? flowItem.alias : flowItem.filter}-->|${jumpIfKey}|${jumpIfValue};\n`;
+            mermaidText += `${chartNode.id}-.->|${jumpIfKey}|${jumpIfValue};\n`;
           } else {
-            mermaidText += `${flowItem?.alias ? flowItem.alias : flowItem.filter}-->${jumpIfValue};\n`;
+            mermaidText += `${chartNode.id}-.->${jumpIfValue};\n`;
           }
         });
       });
