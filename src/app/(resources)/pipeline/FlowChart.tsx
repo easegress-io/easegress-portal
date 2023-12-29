@@ -37,9 +37,9 @@ export default function FlowChart({ idPrefix, pipeline }: FlowChartProps) {
 
     let flow = pipeline.flow || []
     if (flow.length === 0) {
-      flow = pipeline.filters?.map(f => {
+      flow = pipeline.filters?.map((f, index) => {
         return {
-          filter: f?.name || "typing...",
+          filter: f?.name || `typing-filter-${index}...`,
           alias: "",
           jumpIf: {},
           namespace: "",
@@ -49,12 +49,28 @@ export default function FlowChart({ idPrefix, pipeline }: FlowChartProps) {
 
     let mermaidText = 'graph TB;\n';
 
+    let lastIsEnd = false
     mermaidText += 'START((START))';
     flow && flow.length && flow.forEach(
-      (flowItem) =>
-        (mermaidText += `==>${flowItem?.alias || flowItem.filter}`)
+      (flowItem, index) => {
+        const name = flowItem?.alias || flowItem?.filter || `typing-filter-${index}...`
+        if (name === "END") {
+          lastIsEnd = true
+          mermaidText += '==>END((END));\n';
+          return
+        }
+        if (lastIsEnd) {
+          mermaidText += `${name}`
+          lastIsEnd = false
+        } else {
+          mermaidText += `==>${name}`
+        }
+      }
     );
-    mermaidText += '==>END((END));\n';
+    if (!lastIsEnd) {
+      mermaidText += '==>END((END));\n';
+    }
+    console.log(mermaidText)
 
     flow && flow.length && flow
       .filter((flowItem) => !_.isEmpty(flowItem?.jumpIf))
