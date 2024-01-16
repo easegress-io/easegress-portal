@@ -51,6 +51,7 @@ You can view your images created with `docker images`.
 **1. Cluster Management**
 
 ![cluster](./docs/imgs/cluster.png)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Feasegress-io%2Feasegress-portal.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Feasegress-io%2Feasegress-portal?ref=badge_shield)
 
 **2. Traffic Management**
 
@@ -86,3 +87,6 @@ See [Contributing guide](./CONTRIBUTING.md#contributing).
 ## License
 
 Easegress is under the Apache 2.0 license. See the [LICENSE](./LICENSE) file for details.
+
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Feasegress-io%2Feasegress-portal.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Feasegress-io%2Feasegress-portal?ref=badge_large)
