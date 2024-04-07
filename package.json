@@ -13,7 +13,7 @@
     "@emotion/react": "^11.11.1",
     "@emotion/styled": "^11.11.0",
     "@monaco-editor/react": "^4.5.2",
-    "@mui/icons-material": "^5.14.9",
+    "@mui/icons-material": "^5.15.4",
     "@mui/material": "^5.14.12",
     "@types/js-yaml": "^4.0.6",
     "axios": "^1.5.1",
